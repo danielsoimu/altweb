@@ -8,6 +8,19 @@ RewriteCond %{HTTPS} !=on
 RewriteCond %{REQUEST_URI} !^/\.well-known/ [NC]
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
+# Security headers. The editor handles the identity passphrase — the root
+# credential of the whole model — so the CSP is strict: no inline or external
+# scripts (theme-init.js is an external file for exactly this reason).
+# style 'unsafe-inline' is required by the editor libraries (TipTap/tippy
+# inject style elements); data:/blob: images cover QR codes and embedded
+# images. The app makes no network calls beyond its own origin.
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
 # Hashed assets are immutable — cache hard
 <IfModule mod_headers.c>
   <FilesMatch "\.(woff2|js|css)$">

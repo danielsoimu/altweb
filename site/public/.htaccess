@@ -10,6 +10,16 @@ RewriteCond %{HTTPS} !=on
 RewriteCond %{REQUEST_URI} !^/\.well-known/ [NC]
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
+# Security headers (no CSP here: Pagefind needs WASM and Mermaid injects
+# inline styles — a policy loose enough for them protects little; the strict
+# CSP lives on the editor, which handles the identity passphrase)
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
 # Hashed assets are immutable - cache hard
 <IfModule mod_headers.c>
   <FilesMatch "\.(woff2)$">

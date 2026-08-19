@@ -29,16 +29,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <title>ALTWEB Editor</title>
-    <script>
-      // Apply the saved theme before first paint to avoid a flash.
-      try {
-        if (localStorage.getItem('altweb.editor.theme') === 'dark') {
-          document.documentElement.classList.add('dark');
-        }
-      } catch {
-        /* storage unavailable — default to light */
-      }
-    </script>
+    <!-- Blocking on purpose: must run before first paint. External (not
+         inline) so the .htaccess CSP can stay script-src 'self'. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
