@@ -1,8 +1,12 @@
 /**
  * ECDSA-P256 Digital Signing
- * Uses the native Web Crypto API (no external dependencies)
+ * Signing is deterministic (RFC 6979 via @noble/curves): same content + same
+ * key => same signature bytes, so signed capsule builds are byte-reproducible.
+ * Verification stays on the native Web Crypto API and accepts both
+ * deterministic and legacy random-k signatures (ECDSA verify is agnostic).
  */
 
+import { p256 } from '@noble/curves/nist.js';
 import { base64urlEncode, base64urlDecode } from './encoding';
 
 export async function generateSigningKeyPair(): Promise<CryptoKeyPair> {
@@ -20,6 +24,21 @@ export async function sign(
   data: Uint8Array,
   privateKey: CryptoKey
 ): Promise<string> {
+  // Deterministic path (RFC 6979): extract the scalar and sign with noble.
+  // Output is IEEE P1363 r||s (64 bytes) — the same wire format Web Crypto
+  // produces and verify() expects.
+  try {
+    const jwk = await crypto.subtle.exportKey('jwk', privateKey);
+    if (jwk.d) {
+      const digest = new Uint8Array(
+        await crypto.subtle.digest('SHA-256', data as BufferSource)
+      );
+      const signature = p256.sign(digest, base64urlDecode(jwk.d), { prehash: false });
+      return base64urlEncode(signature);
+    }
+  } catch {
+    // Non-extractable key — fall back to Web Crypto (random k, still valid).
+  }
   const signature = await crypto.subtle.sign(
     { name: 'ECDSA', hash: 'SHA-256' },
     privateKey,

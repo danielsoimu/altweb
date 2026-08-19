@@ -57,7 +57,16 @@ export async function deriveIdentityFromPassphrase(passphrase: string): Promise<
     256 // 32 bytes
   );
 
-  const privateScalar = new Uint8Array(seedBits);
+  // ~1 in 2^32 seeds falls outside [1, n-1] for P-256; noble would throw.
+  // Deterministic rehash-until-valid (FIPS 186-5 B.4.1 style): valid seeds —
+  // virtually all — are used unchanged, so existing identities are unaffected;
+  // out-of-range seeds now derive a key instead of crashing.
+  let privateScalar = new Uint8Array(seedBits);
+  while (!p256.utils.isValidSecretKey(privateScalar)) {
+    privateScalar = new Uint8Array(
+      await crypto.subtle.digest('SHA-256', privateScalar as BufferSource)
+    );
+  }
 
   // 2. Compute public key using @noble/curves
   // getPublicKey returns uncompressed format: 04 || x(32) || y(32) = 65 bytes

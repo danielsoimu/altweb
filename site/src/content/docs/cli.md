@@ -17,7 +17,7 @@ hash string itself.
 
 ```bash
 altweb compile <input.md> [-o <out>] [--format html|hash|url|json] [--sign]
-               [--title <t>] [--lang ro|en] [--base-url <url>]
+               [--encrypt [<password>]] [--title <t>] [--lang ro|en] [--base-url <url>]
 ```
 
 Compiles a markdown file into a capsule.
@@ -32,8 +32,10 @@ Compiles a markdown file into a capsule.
 | `--base-url` | Base for `--format url` output |
 | `--encrypt` | Encrypt the capsule; the password comes from the flag value or `ALTWEB_ENCRYPT_PASSWORD` |
 
-Timestamps derive from the source file's mtime, so recompiling the same file
-produces the same artifact — capsule builds are deterministic.
+Timestamps derive from the source file's mtime and signatures are
+deterministic ECDSA (RFC 6979), so recompiling the same file produces the same
+artifact byte for byte — signed or unsigned. (Encrypted builds are the
+exception: AES-GCM uses a fresh random IV per encryption, by design.)
 
 When signing, the signer fingerprint is printed to stderr so pipelines that
 capture stdout stay clean.
