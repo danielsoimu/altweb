@@ -9,7 +9,9 @@
   },
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/altweb-context.mjs --external:jsdom --banner:js='#!/usr/bin/env node'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@altweb/core": "*",

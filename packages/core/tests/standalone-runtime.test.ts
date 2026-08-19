@@ -108,6 +108,7 @@ describe('standalone runtime URL sanitization (hand-crafted envelope)', () => {
         { t: 'img', d: 'data:image/png;base64,AAAA' },
         { t: 'a', url: 'https://example.com', title: 'ok' },
       ],
+      style: { font: 'sans', theme: 'light' },
     };
     const hash = await encodePageUnsanitized(hostile);
     const out = await renderedHtmlFor(hash);

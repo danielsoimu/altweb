@@ -19,8 +19,8 @@
     "apps/*"
   ],
   "scripts": {
-    "test": "npm run test:run -w @altweb/core",
-    "test:run": "npm run test:run -w @altweb/core",
+    "test": "npm run test:run -w @altweb/core && npm run test:run -w @altweb/mcp && npm run test:run -w @altweb/editor",
+    "test:run": "npm run test:run -w @altweb/core && npm run test:run -w @altweb/mcp && npm run test:run -w @altweb/editor",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present"
   },
