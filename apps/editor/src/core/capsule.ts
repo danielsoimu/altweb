@@ -19,7 +19,9 @@ export function buildPage(blocks: ContentBlock[], title: string): AltPage {
     blocks,
     style: {
       font: 'sans',
-      theme: 'auto',
+      // Light-first, like the rest of ALTWEB — the reader can still open a
+      // dark capsule if its author explicitly chose 'dark'.
+      theme: 'light',
     },
   };
 }

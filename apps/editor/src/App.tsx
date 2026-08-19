@@ -139,7 +139,7 @@ export default function App() {
       <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/90">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2" aria-label="ALTWEB">
-            <img src="/favicon.svg" alt="" width="24" height="24" className="h-6 w-6 rounded-[5px]" />
+            <img src="/favicon.svg" alt="" width="24" height="24" className="h-6 w-6" />
             <span className="flex items-baseline gap-2">
               <span className="text-sm font-bold tracking-[0.2em]">ALTWEB</span>
               <span className="text-sm text-neutral-400">editor</span>
@@ -201,7 +201,7 @@ export default function App() {
           <div className="flex flex-wrap justify-between gap-x-10 gap-y-8">
             <div className="max-w-xs">
               <span className="inline-flex items-center gap-2 text-sm font-bold tracking-[0.18em]">
-                <img src="/favicon.svg" alt="" width="22" height="22" className="h-[22px] w-[22px] rounded-[5px]" />
+                <img src="/favicon.svg" alt="" width="22" height="22" className="h-[22px] w-[22px]" />
                 ALTWEB
               </span>
               <p className="mt-3 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">

@@ -1051,10 +1051,13 @@ ${DOMPURIFY_CODE}
         document.title = '⚠ ' + document.title;
       }
 
-      // Apply theme class to body
+      // Apply theme class to body. ALTWEB is light-first: anything that is not
+      // explicitly 'dark' renders light (adding .theme-light neutralizes the
+      // prefers-color-scheme:dark media queries), so an 'auto'/unset capsule
+      // does NOT flip to dark just because the reader's OS is in dark mode.
       if (style.theme === 'dark') {
         document.body.classList.add('theme-dark');
-      } else if (style.theme === 'light') {
+      } else {
         document.body.classList.add('theme-light');
       }
 

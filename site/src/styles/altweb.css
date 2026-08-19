@@ -53,7 +53,10 @@
 	--aw-stop: #b42318;
 
 	--sl-content-width: 47rem;
-	--sl-nav-height: 4rem;
+	/* Match the editor header height (56px) for a consistent, slim top bar.
+	   !important is required: Starlight resets this to 4rem in a >=50em media
+	   query that otherwise wins on desktop. */
+	--sl-nav-height: 3.5rem !important;
 }
 
 /* Light (default — the ThemeProvider override falls back to light). */
@@ -331,6 +334,13 @@ body:has(.aw-hero) .header {
 	border-bottom: none;
 	background: transparent;
 	box-shadow: none;
+}
+/* Constrain the header content to the page's content column and center it —
+   like the editor header, so the logo sits above the hero instead of hugging
+   the far-left viewport edge. The bar itself stays full-width. */
+body:has(.aw-hero) .header > .header {
+	max-width: var(--sl-content-width);
+	margin-inline: auto;
 }
 /* The page-title panel is empty on splash — collapse it and drop the divider
    Starlight draws between adjacent content panels, so the top is borderless. */
