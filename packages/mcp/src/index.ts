@@ -22,6 +22,7 @@ import {
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { frameCapsuleText } from './frame';
 import { resolveHash } from './resolve';
 import { findTrusted, loadTrustedKeys, trustFilePath } from './trust';
 
@@ -101,9 +102,12 @@ server.registerTool(
       content: [
         {
           type: 'text' as const,
-          text:
-            `[capsule verified — signer: ${trusted.name} (${result.publicKeyFingerprint})]\n\n` +
-            markdown,
+          // Content is fenced behind a random per-call nonce so it cannot
+          // imitate the provenance header (see frame.ts).
+          text: frameCapsuleText(markdown, {
+            signerName: trusted.name,
+            fingerprint: result.publicKeyFingerprint,
+          }),
         },
       ],
     };
