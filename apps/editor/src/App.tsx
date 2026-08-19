@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import type { DerivedIdentity } from '@altweb/core';
+import { inspectArtifact, decodePage, type DerivedIdentity } from '@altweb/core';
 import type { EditorInstance, JSONContent } from 'novel';
 import {
   FolderOpen,
@@ -23,6 +23,8 @@ import { ExportPanel } from './components/ExportPanel';
 import { OpenPanel } from './components/OpenPanel';
 import { IdentityPanel } from './components/IdentityPanel';
 import { convertEditorContent } from './core/tiptapToAltweb';
+import { altwebToTiptap } from './core/altwebToTiptap';
+import { extractHash } from './core/capsule';
 import { loadSavedIdentity, type SavedIdentity } from './core/identity';
 import type { Provenance } from './core/provenance';
 
@@ -99,17 +101,28 @@ export default function App() {
   const [provenance, setProvenance] = useState<Provenance | null>(null);
   const [savedIdentity, setSavedIdentity] = useState<SavedIdentity | null>(loadSavedIdentity);
   const [unlockedIdentity, setUnlockedIdentity] = useState<DerivedIdentity | null>(null);
+  const [pendingHash, setPendingHash] = useState<string | null>(null);
   const editorRef = useRef<EditorInstance | null>(null);
+  // Snapshot of the live document. Kept in sync via onReady + onUpdate so export
+  // never reads a stale editor instance (React StrictMode remounts the editor in
+  // dev, which can leave editorRef pointing at a destroyed, empty one).
+  const latestDocRef = useRef<JSONContent | undefined>(undefined);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
+  const captureEditor = (editor: EditorInstance) => {
+    editorRef.current = editor;
+    latestDocRef.current = editor.getJSON();
+  };
+
   const getBlocks = () => {
+    const doc = latestDocRef.current;
+    if (doc) return convertEditorContent(doc);
     const editor = editorRef.current;
-    if (!editor) return [];
-    return convertEditorContent(editor.getJSON());
+    return editor ? convertEditorContent(editor.getJSON()) : [];
   };
 
   const handleCapsuleOpen = (doc: JSONContent, capsuleProvenance: Provenance) => {
@@ -118,6 +131,46 @@ export default function App() {
     setProvenance(capsuleProvenance);
     setPanel(null);
   };
+
+  // Auto-open a capsule handed in via the URL fragment (#<hash>) — the shareable
+  // link the Export panel produces. Without this a pasted link (e.g. in a fresh
+  // browser with no localStorage) just booted a blank editor instead of the page.
+  useEffect(() => {
+    const capsuleHash = extractHash(window.location.hash);
+    if (!capsuleHash) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const info = await inspectArtifact(capsuleHash);
+        if (cancelled) return;
+        if (info.encrypted) {
+          // Needs a password — hand off to the Open panel, pre-inspected.
+          setPendingHash(capsuleHash);
+          setPanel('open');
+          return;
+        }
+        const decoded = await decodePage(capsuleHash);
+        if (cancelled) return;
+        handleCapsuleOpen(altwebToTiptap(decoded.page.blocks) as JSONContent, {
+          encrypted: false,
+          signed: info.signed,
+          verified: info.signed ? decoded.verified : null,
+          fingerprint: decoded.publicKeyFingerprint ?? info.fingerprint,
+          title: decoded.page.meta.title,
+        });
+      } catch {
+        if (cancelled) return;
+        // Unknown/corrupt hash — surface it in the Open panel rather than fail silently.
+        setPendingHash(capsuleHash);
+        setPanel('open');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Mount-only: the fragment is read once, when the shared link first loads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleIdentityUnlocked = (identity: DerivedIdentity, saved: SavedIdentity) => {
     setUnlockedIdentity(identity);
@@ -190,9 +243,8 @@ export default function App() {
         <Editor
           key={docKey}
           initialContent={initialDoc}
-          onReady={(editor) => {
-            editorRef.current = editor;
-          }}
+          onReady={captureEditor}
+          onUpdate={captureEditor}
         />
       </main>
 
@@ -279,7 +331,14 @@ export default function App() {
         />
       ) : null}
       {panel === 'open' ? (
-        <OpenPanel onOpen={handleCapsuleOpen} onClose={() => setPanel(null)} />
+        <OpenPanel
+          onOpen={handleCapsuleOpen}
+          initialHash={pendingHash}
+          onClose={() => {
+            setPanel(null);
+            setPendingHash(null);
+          }}
+        />
       ) : null}
       {panel === 'identity' ? (
         <IdentityPanel

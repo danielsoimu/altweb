@@ -4,7 +4,7 @@
  * the blocks into the editor.
  */
 
-import { useRef, useState, type DragEvent } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import {
   inspectArtifact,
   decodePage,
@@ -21,6 +21,8 @@ import { altwebToTiptap } from '../core/altwebToTiptap';
 interface OpenPanelProps {
   onOpen: (doc: JSONContent, provenance: Provenance) => void;
   onClose: () => void;
+  /** Capsule hash from a shared URL — auto-inspected on mount when present. */
+  initialHash?: string | null;
 }
 
 function ProvenanceBadge({ info }: { info: ArtifactInfo }) {
@@ -60,7 +62,7 @@ function ProvenanceBadge({ info }: { info: ArtifactInfo }) {
   );
 }
 
-export function OpenPanel({ onOpen, onClose }: OpenPanelProps) {
+export function OpenPanel({ onOpen, onClose, initialHash }: OpenPanelProps) {
   const [input, setInput] = useState('');
   const [hash, setHash] = useState<string | null>(null);
   const [info, setInfo] = useState<ArtifactInfo | null>(null);
@@ -87,6 +89,15 @@ export function OpenPanel({ onOpen, onClose }: OpenPanelProps) {
       setError('Not a valid ALTWEB capsule.');
     }
   };
+
+  // Opened from a shared URL (#<hash>): show the hash and inspect it right away
+  // so the reader lands on the provenance badge (and password field, if any).
+  useEffect(() => {
+    if (!initialHash) return;
+    setInput(initialHash);
+    void inspect(initialHash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialHash]);
 
   const readFile = async (file: File) => {
     const text = await file.text();

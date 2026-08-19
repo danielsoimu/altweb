@@ -140,9 +140,10 @@ function FormatBubble() {
 interface EditorProps {
   initialContent?: JSONContent;
   onReady: (editor: EditorInstance) => void;
+  onUpdate?: (editor: EditorInstance) => void;
 }
 
-export function Editor({ initialContent, onReady }: EditorProps) {
+export function Editor({ initialContent, onReady, onUpdate }: EditorProps) {
   const extensions = useMemo(() => [...defaultExtensions, slashCommand], []);
 
   return (
@@ -152,6 +153,7 @@ export function Editor({ initialContent, onReady }: EditorProps) {
         extensions={extensions}
         initialContent={initialContent}
         onCreate={({ editor }) => onReady(editor)}
+        onUpdate={({ editor }) => onUpdate?.(editor)}
         editorProps={{
           handleDOMEvents: {
             keydown: (_view, event) => handleCommandNavigation(event),
