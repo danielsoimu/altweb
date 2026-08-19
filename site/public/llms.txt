@@ -1,0 +1,30 @@
+# ALTWEB
+
+> Signed context capsules for AI agents — Markdown compiled into self-contained, verifiable, optionally encrypted artifacts + an MCP loader that refuses unsigned or untrusted context. Verify before you inject.
+
+AI agents run on plain-text context — instructions, personas, skills, memory — that carries no provenance: anything able to write those files can silently poison them. ALTWEB compiles markdown into a **capsule** (a single `.altweb.html` file or URL: deflate-compressed, optionally AES-256-GCM encrypted, optionally ECDSA P-256 signed), and puts a **loader** in front of your agent that returns content only when the signature verifies and the signer's key is in your local trust file. Everything else is refused, at load time, with an explicit reason — and refusal is the default.
+
+Everything is offline and self-contained: capsules open in any browser, verify with no server, and need no hosting. Open source (AGPL-3.0-or-later), no telemetry, no third parties.
+
+## Start here
+
+- [Quickstart](https://altweb.software/quickstart/): From a markdown file to a signed, verified capsule loaded into your agent — the whole loop in five steps.
+- [Live demo capsule](https://altweb.software/demo/): A real signed capsule published on this site — download it, verify it locally, and load it through the MCP server.
+
+## The capsule
+
+- [Capsule format](https://altweb.software/capsule-format/): The envelope, the compression, and the cryptography — what is actually inside a .altweb.html file or URL hash.
+- [Security model](https://altweb.software/security-model/): What a signature proves, what it does not, where the trust decisions live, and the caveats you should actually know.
+
+## Tools
+
+- [CLI reference](https://altweb.software/cli/): altweb compile, decode, verify, keygen — flags, inputs, outputs, and exit codes.
+- [MCP loader (altweb-context)](https://altweb.software/mcp-loader/): The MCP server that loads capsules into AI agents with verification before injection — and refuses everything else, by default, with an explicit reason.
+- [Editor](https://capsule.altweb.software): A browser WYSIWYG editor for writing capsules visually and exporting them as a file, URL, or QR code.
+
+## Optional
+
+- [FAQ](https://altweb.software/faq/): Short, honest answers — including the things ALTWEB deliberately does not do.
+- [Credits](https://altweb.software/credits/): The open source projects ALTWEB builds on.
+- [Source code](https://github.com/danielsoimu/altweb): The full repository — core, CLI, MCP server, and editor.
+- [Full docs, concatenated](https://altweb.software/llms-full.txt): Every documentation page as one plain-text file.

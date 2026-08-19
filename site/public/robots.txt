@@ -1,0 +1,12 @@
+# ALTWEB — https://altweb.software
+# Signed context capsules for AI agents. Crawlers and AI agents are welcome:
+# the whole point is machine-readable, verifiable context.
+
+User-agent: *
+Allow: /
+
+# Curated, machine-readable index for LLMs (https://llmstxt.org):
+#   https://altweb.software/llms.txt        — curated index
+#   https://altweb.software/llms-full.txt   — full docs, concatenated
+
+Sitemap: https://altweb.software/sitemap-index.xml

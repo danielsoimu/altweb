@@ -1,7 +1,8 @@
 # ALTWEB — signed context capsules
 
-**Write markdown. Ship it as a self-contained, verifiable, optionally encrypted
-artifact. Let AI agents load it only after the signature checks out.**
+**Signed context capsules for AI agents — Markdown compiled into self-contained,
+verifiable, optionally encrypted artifacts + an MCP loader that refuses unsigned
+or untrusted context. Verify before you inject.**
 
 AI agents run on plain-text context: instructions, personas, skills, memory
 files. None of it has provenance — anything that can write those files can

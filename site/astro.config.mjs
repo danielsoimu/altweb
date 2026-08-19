@@ -2,6 +2,51 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
+const SITE = 'https://altweb.software';
+
+// Canonical MASTER description — the full positioning line. Short, slot-sized
+// tiers (headline / meta / rallying cry) derive from it; this is the one that
+// goes wherever there is room: JSON-LD, README, package.json, llms.txt.
+const MASTER =
+	'Signed context capsules for AI agents — Markdown compiled into self-contained, ' +
+	'verifiable, optionally encrypted artifacts + an MCP loader that refuses unsigned ' +
+	'or untrusted context. Verify before you inject.';
+
+// schema.org graph for rich results: the site, the software, and the author.
+const JSON_LD = JSON.stringify({
+	'@context': 'https://schema.org',
+	'@graph': [
+		{
+			'@type': 'WebSite',
+			'@id': `${SITE}/#website`,
+			url: `${SITE}/`,
+			name: 'ALTWEB',
+			description: MASTER,
+			inLanguage: 'en',
+			publisher: { '@id': `${SITE}/#person` },
+		},
+		{
+			'@type': 'SoftwareApplication',
+			name: 'ALTWEB',
+			applicationCategory: 'DeveloperApplication',
+			operatingSystem: 'Any (browser, Node.js)',
+			description: MASTER,
+			url: `${SITE}/`,
+			softwareVersion: '1.0.0',
+			license: 'https://www.gnu.org/licenses/agpl-3.0.html',
+			codeRepository: 'https://github.com/danielsoimu/altweb',
+			offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+			author: { '@id': `${SITE}/#person` },
+		},
+		{
+			'@type': 'Person',
+			'@id': `${SITE}/#person`,
+			name: 'Daniel C. Șoimu',
+			url: 'https://github.com/danielsoimu',
+		},
+	],
+});
+
 // ALTWEB public site: product presentation + documentation.
 // English only. Local Pagefind search, self-hosted fonts, no external
 // services. Diagrams render client-side from a locally bundled mermaid.
@@ -11,7 +56,7 @@ export default defineConfig({
 		starlight({
 			title: 'ALTWEB',
 			description:
-				'Signed context capsules for AI agents: markdown compiled into self-contained, verifiable artifacts. Verify before you inject.',
+				'Signed context capsules for AI agents: verifiable, optionally encrypted markdown artifacts + an MCP loader that refuses untrusted context.',
 			favicon: '/favicon.svg',
 			customCss: ['./src/styles/altweb.css'],
 			components: {
@@ -49,6 +94,20 @@ export default defineConfig({
 						crossorigin: 'anonymous',
 					},
 				},
+				// Social card image (Starlight already emits twitter:card=summary_large_image).
+				{ tag: 'meta', attrs: { property: 'og:image', content: `${SITE}/og-image.png` } },
+				{ tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
+				{ tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
+				{
+					tag: 'meta',
+					attrs: {
+						property: 'og:image:alt',
+						content: 'ALTWEB — Signed context capsules for AI agents. Verify before you inject.',
+					},
+				},
+				{ tag: 'meta', attrs: { name: 'twitter:image', content: `${SITE}/og-image.png` } },
+				// Structured data for rich results.
+				{ tag: 'script', attrs: { type: 'application/ld+json' }, content: JSON_LD },
 			],
 			social: [
 				{

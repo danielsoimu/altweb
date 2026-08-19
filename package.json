@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Signed context capsules: markdown compiled into self-contained, verifiable, optionally encrypted artifacts — for humans and AI agents.",
+  "description": "Signed context capsules for AI agents — Markdown compiled into self-contained, verifiable, optionally encrypted artifacts + an MCP loader that refuses unsigned or untrusted context. Verify before you inject.",
   "license": "AGPL-3.0-or-later",
   "author": "Daniel C. Șoimu",
   "homepage": "https://altweb.software",

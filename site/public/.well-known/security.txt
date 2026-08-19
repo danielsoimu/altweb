@@ -1,0 +1,6 @@
+# ALTWEB security contact — https://altweb.software
+Contact: mailto:daniel@soimu.ro
+Expires: 2027-08-19T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://altweb.software/.well-known/security.txt
+Policy: https://altweb.software/security-model/
