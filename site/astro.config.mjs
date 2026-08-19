@@ -67,7 +67,7 @@ export default defineConfig({
 						{ label: 'Live demo capsule', slug: 'demo' },
 						{
 							label: 'Open the editor ↗',
-							link: 'https://editor.altweb.software',
+							link: 'https://capsule.altweb.software',
 							attrs: { target: '_blank', rel: 'noopener' },
 						},
 					],

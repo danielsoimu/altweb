@@ -9,7 +9,7 @@ Tiptap). You write in a clean block editor instead of raw markdown, then
 export the result as a capsule in one step.
 
 <p>
-	<a class="aw-btn aw-btn--primary" href="https://editor.altweb.software">Open the editor →</a>
+	<a class="aw-btn aw-btn--primary" href="https://capsule.altweb.software">Open the editor →</a>
 </p>
 
 ## What it does
