@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:;">
+  <meta name="altweb-hash" content="eyJ2IjoxLCJlbmMiOmZhbHNlLCJkIjoiZU5yTlZFMXIzREFRX1N1RHptWWhXMmlUdmFWTkQ0VlNTZ21FMHVRd2xzZTJ1cklrSkRtYkpleF83NVBpRGFGSkthU1hnZzhhYWI3ZW0zbS1WN2RxYzlLb1NUS3J6YjNLSmx0UkczVWhrNmNnTVhuSEc0cGloWk9RdU1FNGthZ2ExVW5TMFlSc3ZJUDdPVTNHbVlrdDhTQXVIeU1iU3FNSlFUcmlSRXpKREE3bjg4LVhWeF9may1hUVppc3J1aHhOSW54NUZOb2ExMTA3MzFOdnJCQzdKZF9PejdZajV5TksyRDM2NFpveVdEYXVvZG5kU2pTOTRSWXhXZTd5Q2cxcU9HWHBnTzdkNmR1ejA1TTM2N09UOVJwSWZRZlhGeDRzdXdGUXhLbERvMXJyOVRhcHpROVFnc3NSQ1cwbFN2LWRuRVB6RUJUVWdfdF9SODZ4d1FYVi1xSE5ieDZUXzczMzczNG1qaWlHanFMMHMzMEdkMFhGSjBRSnhVLVBZRkdzSDFLRHMtZ3RvWHJDa2x3N04wOHR6ZzBhNzZqa1FwSU1IdWZXbWpUaWRwOUg0d1lnNVV3akFEZ1Byamdsc0ZMUVowbVowbXl5X0JFQkdFdVBiOGlhOGV4ako3R011MmVicEZHSW44cGcxUmRCYTlUT1V3QzZwVXZhbVR6Nk9lTm00cXhyUDQtUUFEbkhmZG10Yzd2amZhSTR1OW9aYUxGUDJxTldlZzh1TWc5RFNjQkh6a3JvcDc3TU9rdWdubzBGR3luN3NGQVNmTXdydXZBVnVabEM5TGNHSkhIME05NE5KbmZUS09jaHZicVlCZktyUVJTVzZuSy1Gc294d2I4Qk90eThQTXF2Y0JYSFRqOWZ5YXFJUlItMHc1NW9Qd1VJb3F0RkZ4a1ZDaXFndWw3NktLdXVLSGNyLTlXMS0xQVpxY0p6ZzYyYkcxbG5zQW1CbFVqdFhTN3lLbG1MWFRKem5zRkdDNGx0MDRiNGV0RVdDbHJQMkRQVXRmYkpjaHYzVTNSZWtEWXE1WDM1dXdMUEtGUDV6ZktjUFdEMUtBVXJzVXV3V0d1cGRtdG5nVDN4M1JXc3FWT0h3eThKYmUxaiIsInMiOiJYMW9tR01iSmJZMFJCTGJOU0lSbUYzVkxRWnVqaEpFR1RxQWU2OG5pSWdHVUVnVUNPQnZUV1JyT0JFTFJ2NzdNSUxsUHVlTVFQRjQzOU9iZUpXcG9wQSIsInBrIjoiTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFZDJuOTNUZ1ZHRVJhVzhsVEZBRW5iakxPVUprdGJwOUlMSm5BNVhXWklHOXF3LVJjRzE5emRtN3FGdUtDVzJCbjdkeHZrelBWbEk2TTA3a01ta2VRc2cifQ">
+  <title>Demo persona: release engineer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { min-height: 100%; }
+    body { min-height: 100vh; margin: 0; }
+
+    :root {
+      --accent-color: #3b82f6;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+    }
+
+    /* Theme colors - matches PageRenderer themeColors */
+    body { background: #ffffff; color: #1a1a1a; }
+    body.theme-dark { background: #121212; color: #f5f5f5; }
+    body.theme-light { background: #ffffff; color: #1a1a1a; }
+
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) { background: #121212; color: #f5f5f5; }
+    }
+
+    /* Page wrapper - matches PageRenderer min-h-screen */
+    .page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Signature header - matches PageRenderer verified header */
+    .sig-header {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    body.theme-dark .sig-header { border-color: rgba(255,255,255,0.1); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .sig-header { border-color: rgba(255,255,255,0.1); }
+    }
+    .sig-content {
+      max-width: 42rem;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: #16a34a;
+    }
+    .sig-fingerprint {
+      font-family: monospace;
+      font-size: 0.75rem;
+      background: rgba(22, 163, 74, 0.1);
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.25rem;
+      color: #15803d;
+    }
+    body.theme-dark .sig-fingerprint { background: rgba(22, 163, 74, 0.2); color: #4ade80; }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .sig-fingerprint { background: rgba(22, 163, 74, 0.2); color: #4ade80; }
+    }
+    /* Invalid signature banner: loud, red, impossible to miss */
+    .sig-header.sig-invalid {
+      background: #dc2626;
+      border-bottom: 2px solid #991b1b;
+    }
+    .sig-invalid .sig-content {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      justify-content: center;
+    }
+    /* Expandable full signer key (trust pinning aid) */
+    .sig-key summary {
+      cursor: pointer;
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+    .sig-key code {
+      display: block;
+      font-family: monospace;
+      font-size: 0.65rem;
+      word-break: break-all;
+      max-width: 24rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(22, 163, 74, 0.1);
+      border-radius: 0.25rem;
+      margin-top: 0.25rem;
+    }
+    /* Honesty note: the badge is self-rendered; point at independent verification */
+    .sig-note {
+      text-align: right;
+      font-size: 0.65rem;
+      opacity: 0.55;
+      padding-top: 0.25rem;
+    }
+    .sig-invalid .sig-note {
+      color: #ffffff;
+      opacity: 0.85;
+      text-align: center;
+    }
+
+    /* Main content - matches PageRenderer */
+    .page-main {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+    .page-container {
+      max-width: 42rem;
+      margin: 0 auto;
+    }
+    .page-container.max-sm { max-width: 36rem; }
+    .page-container.max-md { max-width: 42rem; }
+    .page-container.max-lg { max-width: 56rem; }
+    .page-container.max-xl { max-width: 1100px; }
+
+    /* Document header (Word-style) - 3 column layout */
+    .doc-header {
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    body.theme-dark .doc-header { border-color: rgba(255,255,255,0.1); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .doc-header { border-color: rgba(255,255,255,0.1); }
+    }
+    .doc-header-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+    }
+    .doc-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      justify-self: start;
+    }
+    .doc-header-center {
+      justify-self: center;
+      text-align: center;
+    }
+    .doc-header-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .doc-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      opacity: 0.6;
+      justify-self: end;
+    }
+    .doc-header-logo {
+      height: 2rem;
+      width: auto;
+      object-fit: contain;
+    }
+    .doc-header-tagline {
+      font-size: 0.875rem;
+      opacity: 0.8;
+    }
+
+    /* Document sub-header (description as foreword) */
+    .doc-subheader {
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    body.theme-dark .doc-subheader { border-color: rgba(255,255,255,0.1); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .doc-subheader { border-color: rgba(255,255,255,0.1); }
+    }
+    .doc-subheader-desc {
+      text-align: center;
+      font-size: 0.875rem;
+      font-style: italic;
+      opacity: 0.8;
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 1rem 0;
+    }
+
+    /* Page header - matches PageRenderer header */
+    .page-header { margin-bottom: 2rem; }
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
+    }
+    .page-desc { opacity: 0.8; }
+    .page-author {
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      opacity: 0.6;
+    }
+
+    /* Document footer (Word-style) - matches PageRenderer DocumentFooter */
+    .doc-footer {
+      border-top: 1px solid rgba(0,0,0,0.1);
+      margin-top: 2rem;
+    }
+    body.theme-dark .doc-footer { border-color: rgba(255,255,255,0.1); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .doc-footer { border-color: rgba(255,255,255,0.1); }
+    }
+    .doc-footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 1rem 0;
+      font-size: 0.875rem;
+      opacity: 0.6;
+    }
+    .doc-footer-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .doc-footer-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .doc-footer-links a {
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+    .doc-footer-links a:hover { text-decoration: underline; }
+
+    /* Footer - matches PageRenderer footer */
+    .page-footer {
+      border-top: 1px solid rgba(0,0,0,0.1);
+      padding: 1.5rem 1rem;
+      text-align: center;
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+    body.theme-dark .page-footer { border-color: rgba(255,255,255,0.1); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .page-footer { border-color: rgba(255,255,255,0.1); }
+    }
+    .footer-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+    .footer-content > span:first-child { font-weight: 500; }
+    .footer-dot { opacity: 0.4; }
+    .footer-timestamp {
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+      opacity: 0.6;
+      letter-spacing: -0.02em;
+    }
+
+    /* Block styles - matches BlockRenderer */
+    .block { margin-bottom: 1rem; }
+
+    /* Headings */
+    h1 { font-size: 1.875rem; font-weight: 700; margin-bottom: 1rem; }
+    h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.75rem; }
+    h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
+    h4 { font-size: 1.125rem; font-weight: 500; margin-bottom: 0.5rem; }
+
+    /* Paragraph */
+    p { margin-bottom: 1rem; line-height: 1.625; }
+
+    /* Link card - matches BlockRenderer LinkBlock */
+    .link-card {
+      display: block;
+      margin: 0.75rem 0;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(0,0,0,0.1);
+      text-decoration: none;
+      color: inherit;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    body.theme-dark .link-card { border-color: rgba(255,255,255,0.15); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .link-card { border-color: rgba(255,255,255,0.15); }
+    }
+    .link-card:hover { background: rgba(0,0,0,0.03); }
+    body.theme-dark .link-card:hover { background: rgba(255,255,255,0.05); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .link-card:hover { background: rgba(255,255,255,0.05); }
+    }
+    .link-inner { display: flex; align-items: center; gap: 0.75rem; }
+    .link-icon { font-size: 1.5rem; }
+    .link-title { font-weight: 500; color: var(--accent-color); }
+    .link-desc { font-size: 0.875rem; opacity: 0.6; }
+
+    /* Code block - matches BlockRenderer CodeBlock */
+    .code-wrapper { margin: 1rem 0; }
+    .code-lang { font-size: 0.75rem; margin-bottom: 0.25rem; font-family: monospace; opacity: 0.6; }
+    pre {
+      background: #1f2937;
+      color: #f3f4f6;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+    code { font-family: monospace; }
+
+    /* Quote - matches BlockRenderer QuoteBlock */
+    blockquote {
+      margin: 1.5rem 0;
+      padding-left: 1rem;
+      border-left: 4px solid var(--accent-color);
+    }
+    blockquote p { font-style: italic; margin-bottom: 0; }
+    .quote-source {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      opacity: 0.6;
+    }
+
+    /* Lists - matches BlockRenderer ListBlock */
+    ul, ol { margin: 1rem 0; padding-left: 1.5rem; }
+    li ul, li ol { margin: 0.25rem 0; }
+    li.task-item { list-style: none; margin-left: -1.25rem; }
+    li.task-item input[type="checkbox"] { accent-color: var(--accent-color); vertical-align: middle; margin-right: 0.4rem; }
+    li { margin-bottom: 0.25rem; }
+
+    /* Divider - matches BlockRenderer hr */
+    hr {
+      border: none;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      margin: 2rem 0;
+    }
+    body.theme-dark hr { border-color: rgba(255,255,255,0.15); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) hr { border-color: rgba(255,255,255,0.15); }
+    }
+
+    /* Image - matches BlockRenderer ImageBlock */
+    figure { margin: 1.5rem 0; }
+    figure img { max-width: 100%; height: auto; border-radius: 0.5rem; display: block; margin: 0 auto; }
+    figcaption { margin-top: 0.5rem; text-align: center; font-size: 0.875rem; opacity: 0.6; }
+
+    /* Table - matches BlockRenderer TableBlock */
+    .table-wrapper { margin: 1.5rem 0; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.5rem 1rem; text-align: left; font-size: 0.875rem; border-bottom: 1px solid rgba(0,0,0,0.1); }
+    body.theme-dark th, body.theme-dark td { border-color: rgba(255,255,255,0.15); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) th, body:not(.theme-light) td { border-color: rgba(255,255,255,0.15); }
+    }
+    th { font-weight: 600; background: rgba(0,0,0,0.03); }
+    body.theme-dark th { background: rgba(255,255,255,0.05); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) th { background: rgba(255,255,255,0.05); }
+    }
+    tr:last-child td { border-bottom: none; }
+
+    /* Fonts */
+    .font-sans { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .font-serif { font-family: Georgia, Cambria, 'Times New Roman', Times, serif; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+
+    /* Text alignment */
+    .text-left { text-align: left; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-justify { text-align: justify; }
+
+    /* Decrypt prompt - matches DecryptPrompt.tsx exactly */
+    .decrypt-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: #f5f5f5;
+    }
+    body.theme-dark .decrypt-screen { background: #0a0a0a; }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .decrypt-screen { background: #0a0a0a; }
+    }
+    .decrypt-container { width: 100%; max-width: 28rem; }
+
+    .decrypt-card {
+      background: white;
+      border-radius: 1rem;
+      border: 1px solid rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    body.theme-dark .decrypt-card { background: #1a1a1a; border-color: rgba(255,255,255,0.1); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .decrypt-card { background: #1a1a1a; border-color: rgba(255,255,255,0.1); }
+    }
+
+    /* Header section */
+    .decrypt-header {
+      padding: 1.5rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    body.theme-dark .decrypt-header { border-color: rgba(255,255,255,0.1); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .decrypt-header { border-color: rgba(255,255,255,0.1); }
+    }
+    .decrypt-icon {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 50%;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.875rem;
+      margin: 0 auto 1rem;
+    }
+    body.theme-dark .decrypt-icon { background: #262626; }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .decrypt-icon { background: #262626; }
+    }
+    .decrypt-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .decrypt-subtitle {
+      font-size: 0.875rem;
+      opacity: 0.6;
+    }
+
+    /* Visible meta header style */
+    .decrypt-header-meta { text-align: left; }
+    .meta-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .meta-icon {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 0.75rem;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    body.theme-dark .meta-icon { background: #262626; }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .meta-icon { background: #262626; }
+    }
+    .meta-info { flex: 1; min-width: 0; }
+    .meta-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .meta-desc {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .meta-author {
+      font-size: 0.75rem;
+      opacity: 0.6;
+      margin-top: 0.5rem;
+    }
+
+    /* Form section */
+    .decrypt-form { padding: 1.5rem; }
+    .decrypt-form > * + * { margin-top: 1rem; }
+
+    .form-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
+      margin-bottom: 0.5rem;
+    }
+    .input-wrapper { position: relative; }
+    .decrypt-input {
+      width: 100%;
+      height: 3rem;
+      padding: 0 3.5rem 0 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(0,0,0,0.15);
+      background: transparent;
+      color: inherit;
+      font-size: 1rem;
+      transition: border-color 0.15s;
+    }
+    body.theme-dark .decrypt-input { border-color: rgba(255,255,255,0.15); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .decrypt-input { border-color: rgba(255,255,255,0.15); }
+    }
+    .decrypt-input:focus { outline: none; border-color: rgba(0,0,0,0.3); }
+    body.theme-dark .decrypt-input:focus { border-color: rgba(255,255,255,0.3); }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .decrypt-input:focus { border-color: rgba(255,255,255,0.3); }
+    }
+    .decrypt-input::placeholder { opacity: 0.4; }
+
+    .toggle-password {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      opacity: 0.5;
+      cursor: pointer;
+      color: inherit;
+    }
+    .toggle-password:hover { opacity: 0.8; }
+
+    .decrypt-error {
+      padding: 0.75rem;
+      background: #f5f5f5;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      text-align: center;
+      color: #dc2626;
+    }
+    body.theme-dark .decrypt-error { background: #262626; }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .decrypt-error { background: #262626; }
+    }
+
+    .decrypt-button {
+      width: 100%;
+      height: 3rem;
+      padding: 0 1rem;
+      background: #1a1a1a;
+      color: white;
+      font-weight: 500;
+      border: none;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    body.theme-dark .decrypt-button { background: #f5f5f5; color: #1a1a1a; }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .decrypt-button { background: #f5f5f5; color: #1a1a1a; }
+    }
+    .decrypt-button:hover { opacity: 0.8; }
+    .decrypt-button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Footer section */
+    .decrypt-footer { padding: 0 1.5rem 1.5rem; }
+    .signed-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      padding: 0.75rem;
+      background: #f5f5f5;
+      border-radius: 0.75rem;
+    }
+    body.theme-dark .signed-badge { background: #262626; }
+    @media (prefers-color-scheme: dark) {
+      body:not(.theme-light) .signed-badge { background: #262626; }
+    }
+    .signed-badge .check { color: #22c55e; }
+    .signed-badge span { opacity: 0.8; }
+
+    /* Branding */
+    .decrypt-branding {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+    .decrypt-branding strong { font-weight: 600; }
+
+    .error { color: #dc2626; font-size: 0.875rem; margin-bottom: 1rem; }
+
+    /* Loading state */
+    .loading { text-align: center; padding: 4rem; opacity: 0.6; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="loading">Loading...</div>
+  </div>
+
+  <!-- DOMPurify 3.4.13 - XSS Protection -->
+  <script>
+  /*! @license DOMPurify 3.4.13 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.4.13/LICENSE */
+/*! @license DOMPurify 3.4.13 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.4.13/LICENSE */
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e="undefined"!=typeof globalThis?globalThis:e||self).DOMPurify=t()}(this,function(){"use strict";function e(e,t){(null==t||t>e.length)&&(t=e.length);for(var n=0,o=Array(t);n<t;n++)o[n]=e[n];return o}function t(t,n){return function(e){if(Array.isArray(e))return e}(t)||function(e,t){var n=null==e?null:"undefined"!=typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=n){var o,r,i,a,l=[],c=!0,s=!1;try{if(i=(n=n.call(e)).next,0===t);else for(;!(c=(o=i.call(n)).done)&&(l.push(o.value),l.length!==t);c=!0);}catch(e){s=!0,r=e}finally{try{if(!c&&null!=n.return&&(a=n.return(),Object(a)!==a))return}finally{if(s)throw r}}return l}}(t,n)||function(t,n){if(t){if("string"==typeof t)return e(t,n);var o={}.toString.call(t).slice(8,-1);return"Object"===o&&t.constructor&&(o=t.constructor.name),"Map"===o||"Set"===o?Array.from(t):"Arguments"===o||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(o)?e(t,n):void 0}}(t,n)||function(){throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}const n=Object.entries,o=Object.setPrototypeOf,r=Object.isFrozen,i=Object.getPrototypeOf,a=Object.getOwnPropertyDescriptor;let l=Object.freeze,c=Object.seal,s=Object.create,u="undefined"!=typeof Reflect&&Reflect,f=u.apply,p=u.construct;l||(l=function(e){return e}),c||(c=function(e){return e}),f||(f=function(e,t){for(var n=arguments.length,o=new Array(n>2?n-2:0),r=2;r<n;r++)o[r-2]=arguments[r];return e.apply(t,o)}),p||(p=function(e){for(var t=arguments.length,n=new Array(t>1?t-1:0),o=1;o<t;o++)n[o-1]=arguments[o];return new e(...n)});const m=L(Array.prototype.forEach),d=L(Array.prototype.lastIndexOf),h=L(Array.prototype.pop),g=L(Array.prototype.push),y=L(Array.prototype.splice),b=Array.isArray,T=L(String.prototype.toLowerCase),S=L(String.prototype.toString),E=L(String.prototype.match),A=L(String.prototype.replace),N=L(String.prototype.indexOf),_=L(String.prototype.trim),w=L(Number.prototype.toString),O=L(Boolean.prototype.toString),v="undefined"==typeof BigInt?null:L(BigInt.prototype.toString),D="undefined"==typeof Symbol?null:L(Symbol.prototype.toString),R=L(Object.prototype.hasOwnProperty),C=L(Object.prototype.toString),I=L(RegExp.prototype.test),x=(k=TypeError,function(){for(var e=arguments.length,t=new Array(e),n=0;n<e;n++)t[n]=arguments[n];return p(k,t)});var k;function L(e){return function(t){t instanceof RegExp&&(t.lastIndex=0);for(var n=arguments.length,o=new Array(n>1?n-1:0),r=1;r<n;r++)o[r-1]=arguments[r];return f(e,t,o)}}function M(e,t){let n=arguments.length>2&&void 0!==arguments[2]?arguments[2]:T;if(o&&o(e,null),!b(t))return e;let i=t.length;for(;i--;){let o=t[i];if("string"==typeof o){const e=n(o);e!==o&&(r(t)||(t[i]=e),o=e)}e[o]=!0}return e}function z(e){for(let t=0;t<e.length;t++){R(e,t)||(e[t]=null)}return e}function P(e){const o=s(null);for(const i of n(e)){var r=t(i,2);const n=r[0],a=r[1];R(e,n)&&(b(a)?o[n]=z(a):a&&"object"==typeof a&&a.constructor===Object?o[n]=P(a):o[n]=a)}return o}function U(e,t){for(;null!==e;){const n=a(e,t);if(n){if(n.get)return L(n.get);if("function"==typeof n.value)return L(n.value)}e=i(e)}return function(){return null}}const F=l(["a","abbr","acronym","address","area","article","aside","audio","b","bdi","bdo","big","blink","blockquote","body","br","button","canvas","caption","center","cite","code","col","colgroup","content","data","datalist","dd","decorator","del","details","dfn","dialog","dir","div","dl","dt","element","em","fieldset","figcaption","figure","font","footer","form","h1","h2","h3","h4","h5","h6","head","header","hgroup","hr","html","i","img","input","ins","kbd","label","legend","li","main","map","mark","marquee","menu","menuitem","meter","nav","nobr","ol","optgroup","option","output","p","picture","pre","progress","q","rp","rt","ruby","s","samp","search","section","select","shadow","slot","small","source","spacer","span","strike","strong","style","sub","summary","sup","table","tbody","td","template","textarea","tfoot","th","thead","time","tr","track","tt","u","ul","var","video","wbr"]),H=l(["svg","a","altglyph","altglyphdef","altglyphitem","animatecolor","animatemotion","animatetransform","circle","clippath","defs","desc","ellipse","enterkeyhint","exportparts","filter","font","g","glyph","glyphref","hkern","image","inputmode","line","lineargradient","marker","mask","metadata","mpath","part","path","pattern","polygon","polyline","radialgradient","rect","stop","style","switch","symbol","text","textpath","title","tref","tspan","view","vkern"]),j=l(["feBlend","feColorMatrix","feComponentTransfer","feComposite","feConvolveMatrix","feDiffuseLighting","feDisplacementMap","feDistantLight","feDropShadow","feFlood","feFuncA","feFuncB","feFuncG","feFuncR","feGaussianBlur","feImage","feMerge","feMergeNode","feMorphology","feOffset","fePointLight","feSpecularLighting","feSpotLight","feTile","feTurbulence"]),B=l(["animate","color-profile","cursor","discard","font-face","font-face-format","font-face-name","font-face-src","font-face-uri","foreignobject","hatch","hatchpath","mesh","meshgradient","meshpatch","meshrow","missing-glyph","script","set","solidcolor","unknown","use"]),G=l(["math","menclose","merror","mfenced","mfrac","mglyph","mi","mlabeledtr","mmultiscripts","mn","mo","mover","mpadded","mphantom","mroot","mrow","ms","mspace","msqrt","mstyle","msub","msup","msubsup","mtable","mtd","mtext","mtr","munder","munderover","mprescripts"]),W=l(["maction","maligngroup","malignmark","mlongdiv","mscarries","mscarry","msgroup","mstack","msline","msrow","semantics","annotation","annotation-xml","mprescripts","none"]),Y=l(["#text"]),q=l(["accept","action","align","alt","autocapitalize","autocomplete","autopictureinpicture","autoplay","background","bgcolor","border","capture","cellpadding","cellspacing","checked","cite","class","clear","color","cols","colspan","command","commandfor","controls","controlslist","coords","crossorigin","datetime","decoding","default","dir","disabled","disablepictureinpicture","disableremoteplayback","download","draggable","enctype","enterkeyhint","exportparts","face","for","headers","height","hidden","high","href","hreflang","id","inert","inputmode","integrity","ismap","kind","label","lang","list","loading","loop","low","max","maxlength","media","method","min","minlength","multiple","muted","name","nonce","noshade","novalidate","nowrap","open","optimum","part","pattern","placeholder","playsinline","popover","popovertarget","popovertargetaction","poster","preload","pubdate","radiogroup","readonly","rel","required","rev","reversed","role","rows","rowspan","spellcheck","scope","selected","shape","size","sizes","slot","span","srclang","start","src","srcset","step","style","summary","tabindex","title","translate","type","usemap","valign","value","width","wrap","xmlns"]),X=l(["accent-height","accumulate","additive","alignment-baseline","amplitude","ascent","attributename","attributetype","azimuth","basefrequency","baseline-shift","begin","bias","by","class","clip","clippathunits","clip-path","clip-rule","color","color-interpolation","color-interpolation-filters","color-profile","color-rendering","cx","cy","d","dx","dy","diffuseconstant","direction","display","divisor","dominant-baseline","dur","edgemode","elevation","end","exponent","fill","fill-opacity","fill-rule","filter","filterunits","flood-color","flood-opacity","font-family","font-size","font-size-adjust","font-stretch","font-style","font-variant","font-weight","fx","fy","g1","g2","glyph-name","glyphref","gradientunits","gradienttransform","height","href","id","image-rendering","in","in2","intercept","k","k1","k2","k3","k4","kerning","keypoints","keysplines","keytimes","lang","lengthadjust","letter-spacing","kernelmatrix","kernelunitlength","lighting-color","local","marker-end","marker-mid","marker-start","markerheight","markerunits","markerwidth","maskcontentunits","maskunits","max","mask","mask-type","media","method","mode","min","name","numoctaves","offset","operator","opacity","order","orient","orientation","origin","overflow","paint-order","path","pathlength","patterncontentunits","patterntransform","patternunits","points","preservealpha","preserveaspectratio","primitiveunits","r","rx","ry","radius","refx","refy","repeatcount","repeatdur","restart","result","rotate","scale","seed","shape-rendering","slope","specularconstant","specularexponent","spreadmethod","startoffset","stddeviation","stitchtiles","stop-color","stop-opacity","stroke-dasharray","stroke-dashoffset","stroke-linecap","stroke-linejoin","stroke-miterlimit","stroke-opacity","stroke","stroke-width","style","surfacescale","systemlanguage","tabindex","tablevalues","targetx","targety","transform","transform-origin","text-anchor","text-decoration","text-orientation","text-rendering","textlength","type","u1","u2","unicode","values","viewbox","visibility","version","vert-adv-y","vert-origin-x","vert-origin-y","width","word-spacing","wrap","writing-mode","xchannelselector","ychannelselector","x","x1","x2","xmlns","y","y1","y2","z","zoomandpan"]),$=l(["accent","accentunder","align","bevelled","close","columnalign","columnlines","columnspacing","columnspan","denomalign","depth","dir","display","displaystyle","encoding","fence","frame","height","href","id","largeop","length","linethickness","lquote","lspace","mathbackground","mathcolor","mathsize","mathvariant","maxsize","minsize","movablelimits","notation","numalign","open","rowalign","rowlines","rowspacing","rowspan","rspace","rquote","scriptlevel","scriptminsize","scriptsizemultiplier","selection","separator","separators","stretchy","subscriptshift","supscriptshift","symmetric","voffset","width","xmlns"]),K=l(["xlink:href","xml:id","xlink:title","xml:space","xmlns:xlink"]),V=c(/{{[\w\W]*|^[\w\W]*}}/g),Z=c(/<%[\w\W]*|^[\w\W]*%>/g),J=c(/\${[\w\W]*/g),Q=c(/^data-[\-\w.\u00B7-\uFFFF]+$/),ee=c(/^aria-[\-\w]+$/),te=c(/^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|matrix):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i),ne=c(/^(?:\w+script|data):/i),oe=c(/[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g),re=c(/^html$/i),ie=c(/^[a-z][.\w]*(-[.\w]+)+$/i),ae=c(/<[/\w!]/g),le=c(/<[/\w]/g),ce=c(/<\/no(script|embed|frames)/i),se=c(/\/>/i),ue=1,fe=3,pe=7,me=8,de=9,he=11,ge=function(){return"undefined"==typeof window?null:window},ye=function(e,t,n,o){return R(e,t)&&b(e[t])?M(o.base?P(o.base):{},e[t],o.transform):n};var be=function e(){let t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:ge();const o=t=>e(t);if(o.version="3.4.13",o.removed=[],!t||!t.document||t.document.nodeType!==de||!t.Element)return o.isSupported=!1,o;let r=t.document;const i=r,a=i.currentScript;t.DocumentFragment;const u=t.HTMLTemplateElement,f=t.Node,p=t.Element,k=t.NodeFilter,L=t.NamedNodeMap;void 0===L&&(t.NamedNodeMap||t.MozNamedAttrMap),t.HTMLFormElement;const z=t.DOMParser,be=t.trustedTypes,Te=p.prototype,Se=U(Te,"cloneNode"),Ee=U(Te,"remove"),Ae=U(Te,"nextSibling"),Ne=U(Te,"childNodes"),_e=U(Te,"parentNode"),we=U(Te,"shadowRoot"),Oe=U(Te,"attributes"),ve=f&&f.prototype?U(f.prototype,"nodeType"):null,De=f&&f.prototype?U(f.prototype,"nodeName"):null,Re=f&&f.prototype?U(f.prototype,"ownerDocument"):null;if("function"==typeof u){const e=r.createElement("template");e.content&&e.content.ownerDocument&&(r=e.content.ownerDocument)}let Ce,Ie,xe="",ke=!1,Le=0;const Me=function(){if(Le>0)throw x('A configured TRUSTED_TYPES_POLICY callback (createHTML or createScriptURL) must not call DOMPurify.sanitize, as that causes infinite recursion. Do not pass a policy whose callbacks wrap DOMPurify as TRUSTED_TYPES_POLICY; see the "DOMPurify and Trusted Types" section of the README.')},ze=function(e){Me(),Le++;try{return Ce.createHTML(e)}finally{Le--}},Pe=function(){return ke||(Ie=function(e,t){if("object"!=typeof e||"function"!=typeof e.createPolicy)return null;let n=null;const o="data-tt-policy-suffix";t&&t.hasAttribute(o)&&(n=t.getAttribute(o));const r="dompurify"+(n?"#"+n:"");try{return e.createPolicy(r,{createHTML:e=>e,createScriptURL:e=>e})}catch(e){return console.warn("TrustedTypes policy "+r+" could not be created."),null}}(be,a),ke=!0),Ie},Ue=r,Fe=Ue.implementation,He=Ue.createNodeIterator,je=Ue.createDocumentFragment,Be=Ue.getElementsByTagName,Ge=i.importNode;let We={afterSanitizeAttributes:[],afterSanitizeElements:[],afterSanitizeShadowDOM:[],beforeSanitizeAttributes:[],beforeSanitizeElements:[],beforeSanitizeShadowDOM:[],uponSanitizeAttribute:[],uponSanitizeElement:[],uponSanitizeShadowNode:[]};o.isSupported="function"==typeof n&&"function"==typeof _e&&Fe&&void 0!==Fe.createHTMLDocument;const Ye=V,qe=Z,Xe=J,$e=Q,Ke=ee,Ve=ne,Ze=oe,Je=ie;let Qe=te,et=null;const tt=M({},[...F,...H,...j,...G,...Y]);let nt=null;const ot=M({},[...q,...X,...$,...K]);let rt=Object.seal(s(null,{tagNameCheck:{writable:!0,configurable:!1,enumerable:!0,value:null},attributeNameCheck:{writable:!0,configurable:!1,enumerable:!0,value:null},allowCustomizedBuiltInElements:{writable:!0,configurable:!1,enumerable:!0,value:!1}})),it=null,at=null;const lt=Object.seal(s(null,{tagCheck:{writable:!0,configurable:!1,enumerable:!0,value:null},attributeCheck:{writable:!0,configurable:!1,enumerable:!0,value:null}}));let ct=!0,st=!0,ut=!1,ft=!0,pt=!1,mt=!0,dt=!1,ht=!1,gt=null,yt=null,bt=!1,Tt=!1,St=!1,Et=!1,At=!0,Nt=!1;const _t="user-content-";let wt=!0,Ot=!1,vt={},Dt=null;const Rt=M({},["annotation-xml","audio","colgroup","desc","foreignobject","head","iframe","math","mi","mn","mo","ms","mtext","noembed","noframes","noscript","plaintext","script","selectedcontent","style","svg","template","thead","title","video","xmp"]);let Ct=null;const It=M({},["audio","video","img","source","image","track"]);let xt=null;const kt=M({},["alt","class","for","id","label","name","pattern","placeholder","role","summary","title","value","style","xmlns"]),Lt="http://www.w3.org/1998/Math/MathML",Mt="http://www.w3.org/2000/svg",zt="http://www.w3.org/1999/xhtml";let Pt=zt,Ut=!1,Ft=null;const Ht=M({},[Lt,Mt,zt],S),jt=l(["mi","mo","mn","ms","mtext"]);let Bt=M({},jt);const Gt=l(["annotation-xml"]);let Wt=M({},Gt);const Yt=M({},["title","style","font","a","script"]);let qt=null;const Xt=["application/xhtml+xml","text/html"];let $t=null,Kt=null;const Vt=r.createElement("form"),Zt=function(e){return e instanceof RegExp||e instanceof Function},Jt=function(){let e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};if(Kt&&Kt===e)return;e&&"object"==typeof e||(e={}),e=P(e),qt=-1===Xt.indexOf(e.PARSER_MEDIA_TYPE)?"text/html":e.PARSER_MEDIA_TYPE,$t="application/xhtml+xml"===qt?S:T,et=ye(e,"ALLOWED_TAGS",tt,{transform:$t}),nt=ye(e,"ALLOWED_ATTR",ot,{transform:$t}),Ft=ye(e,"ALLOWED_NAMESPACES",Ht,{transform:S}),xt=ye(e,"ADD_URI_SAFE_ATTR",kt,{transform:$t,base:kt}),Ct=ye(e,"ADD_DATA_URI_TAGS",It,{transform:$t,base:It}),Dt=ye(e,"FORBID_CONTENTS",Rt,{transform:$t}),it=ye(e,"FORBID_TAGS",P({}),{transform:$t}),at=ye(e,"FORBID_ATTR",P({}),{transform:$t}),vt=!!R(e,"USE_PROFILES")&&(e.USE_PROFILES&&"object"==typeof e.USE_PROFILES?P(e.USE_PROFILES):e.USE_PROFILES),ct=!1!==e.ALLOW_ARIA_ATTR,st=!1!==e.ALLOW_DATA_ATTR,ut=e.ALLOW_UNKNOWN_PROTOCOLS||!1,ft=!1!==e.ALLOW_SELF_CLOSE_IN_ATTR,pt=e.SAFE_FOR_TEMPLATES||!1,mt=!1!==e.SAFE_FOR_XML,dt=e.WHOLE_DOCUMENT||!1,Tt=e.RETURN_DOM||!1,St=e.RETURN_DOM_FRAGMENT||!1,Et=e.RETURN_TRUSTED_TYPE||!1,bt=e.FORCE_BODY||!1,At=!1!==e.SANITIZE_DOM,Nt=e.SANITIZE_NAMED_PROPS||!1,wt=!1!==e.KEEP_CONTENT,Ot=e.IN_PLACE||!1,Qe=function(e){try{return I(e,""),!0}catch(e){return!1}}(e.ALLOWED_URI_REGEXP)?e.ALLOWED_URI_REGEXP:te,Pt="string"==typeof e.NAMESPACE?e.NAMESPACE:zt,Bt=R(e,"MATHML_TEXT_INTEGRATION_POINTS")&&e.MATHML_TEXT_INTEGRATION_POINTS&&"object"==typeof e.MATHML_TEXT_INTEGRATION_POINTS?P(e.MATHML_TEXT_INTEGRATION_POINTS):M({},jt),Wt=R(e,"HTML_INTEGRATION_POINTS")&&e.HTML_INTEGRATION_POINTS&&"object"==typeof e.HTML_INTEGRATION_POINTS?P(e.HTML_INTEGRATION_POINTS):M({},Gt);const t=R(e,"CUSTOM_ELEMENT_HANDLING")&&e.CUSTOM_ELEMENT_HANDLING&&"object"==typeof e.CUSTOM_ELEMENT_HANDLING?P(e.CUSTOM_ELEMENT_HANDLING):s(null);if(rt=s(null),R(t,"tagNameCheck")&&Zt(t.tagNameCheck)&&(rt.tagNameCheck=t.tagNameCheck),R(t,"attributeNameCheck")&&Zt(t.attributeNameCheck)&&(rt.attributeNameCheck=t.attributeNameCheck),R(t,"allowCustomizedBuiltInElements")&&"boolean"==typeof t.allowCustomizedBuiltInElements&&(rt.allowCustomizedBuiltInElements=t.allowCustomizedBuiltInElements),c(rt),pt&&(st=!1),St&&(Tt=!0),vt&&(et=M({},Y),nt=s(null),!0===vt.html&&(M(et,F),M(nt,q)),!0===vt.svg&&(M(et,H),M(nt,X),M(nt,K)),!0===vt.svgFilters&&(M(et,j),M(nt,X),M(nt,K)),!0===vt.mathMl&&(M(et,G),M(nt,$),M(nt,K))),lt.tagCheck=null,lt.attributeCheck=null,R(e,"ADD_TAGS")&&("function"==typeof e.ADD_TAGS?lt.tagCheck=e.ADD_TAGS:b(e.ADD_TAGS)&&(et===tt&&(et=P(et)),M(et,e.ADD_TAGS,$t))),R(e,"ADD_ATTR")&&("function"==typeof e.ADD_ATTR?lt.attributeCheck=e.ADD_ATTR:b(e.ADD_ATTR)&&(nt===ot&&(nt=P(nt)),M(nt,e.ADD_ATTR,$t))),R(e,"ADD_URI_SAFE_ATTR")&&b(e.ADD_URI_SAFE_ATTR)&&M(xt,e.ADD_URI_SAFE_ATTR,$t),R(e,"FORBID_CONTENTS")&&b(e.FORBID_CONTENTS)&&(Dt===Rt&&(Dt=P(Dt)),M(Dt,e.FORBID_CONTENTS,$t)),R(e,"ADD_FORBID_CONTENTS")&&b(e.ADD_FORBID_CONTENTS)&&(Dt===Rt&&(Dt=P(Dt)),M(Dt,e.ADD_FORBID_CONTENTS,$t)),wt&&(et["#text"]=!0),dt&&M(et,["html","head","body"]),et.table&&(M(et,["tbody"]),delete it.tbody),e.TRUSTED_TYPES_POLICY){if("function"!=typeof e.TRUSTED_TYPES_POLICY.createHTML)throw x('TRUSTED_TYPES_POLICY configuration option must provide a "createHTML" hook.');if("function"!=typeof e.TRUSTED_TYPES_POLICY.createScriptURL)throw x('TRUSTED_TYPES_POLICY configuration option must provide a "createScriptURL" hook.');const t=Ce;Ce=e.TRUSTED_TYPES_POLICY;try{xe=ze("")}catch(e){throw Ce=t,e}}else null===e.TRUSTED_TYPES_POLICY?(Ce=void 0,xe=""):(void 0===Ce&&(Ce=Pe()),Ce&&"string"==typeof xe&&(xe=ze("")));l&&l(e),Kt=e},Qt=M({},[...H,...j,...B]),en=M({},[...G,...W]),tn=function(e){let t=_e(e);t&&t.tagName||(t={namespaceURI:Pt,tagName:"template"});const n=T(e.tagName),o=T(t.tagName);return!!Ft[e.namespaceURI]&&(e.namespaceURI===Mt?function(e,t,n){return t.namespaceURI===zt?"svg"===e:t.namespaceURI===Lt?"svg"===e&&("annotation-xml"===n||Bt[n]):Boolean(Qt[e])}(n,t,o):e.namespaceURI===Lt?function(e,t,n){return t.namespaceURI===zt?"math"===e:t.namespaceURI===Mt?"math"===e&&Wt[n]:Boolean(en[e])}(n,t,o):e.namespaceURI===zt?function(e,t,n){return!(t.namespaceURI===Mt&&!Wt[n])&&!(t.namespaceURI===Lt&&!Bt[n])&&!en[e]&&(Yt[e]||!Qt[e])}(n,t,o):!("application/xhtml+xml"!==qt||!Ft[e.namespaceURI]))},nn=function(e){g(o.removed,{element:e});try{_e(e).removeChild(e)}catch(t){if(Ee(e),!_e(e))throw x("a node selected for removal could not be detached from its tree and cannot be safely returned; refusing to sanitize in place")}},on=function(e){ln(e);const t=Ne(e);if(t){const e=[];m(t,t=>{g(e,t)}),m(e,e=>{try{Ee(e)}catch(e){}})}const n=Oe(e);if(n)for(let t=n.length-1;t>=0;--t){const o=n[t],r=o&&o.name;if("string"==typeof r)try{e.removeAttribute(r)}catch(e){}}},rn=function(e,t){try{g(o.removed,{attribute:t.getAttributeNode(e),from:t})}catch(e){g(o.removed,{attribute:null,from:t})}if(t.removeAttribute(e),"is"===e)if(Tt||St)try{nn(t)}catch(e){}else try{t.setAttribute(e,"")}catch(e){}},an=function(e){const t=Oe(e);if(t)for(let n=t.length-1;n>=0;--n){const o=t[n],r=o&&o.name;if("string"==typeof r&&!nt[$t(r)])try{e.removeAttribute(r)}catch(e){}}},ln=function(e){const t=[e];for(;t.length>0;){const e=t.pop();(ve?ve(e):e.nodeType)===ue&&an(e);const n=Ne(e);if(n)for(let e=n.length-1;e>=0;--e)t.push(n[e])}},cn=function(e){let t=null,n=null;if(bt)e="<remove></remove>"+e;else{const t=E(e,/^[\r\n\t ]+/);n=t&&t[0]}"application/xhtml+xml"===qt&&Pt===zt&&(e='<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>'+e+"</body></html>");const o=Ce?ze(e):e;if(Pt===zt)try{t=(new z).parseFromString(o,qt)}catch(e){}if(!t||!t.documentElement){t=Fe.createDocument(Pt,"template",null);try{t.documentElement.innerHTML=Ut?xe:o}catch(e){}}const i=t.body||t.documentElement;return e&&n&&i.insertBefore(r.createTextNode(n),i.childNodes[0]||null),Pt===zt?Be.call(t,dt?"html":"body")[0]:dt?t.documentElement:i},sn=function(e){const t=Re?Re(e):e.ownerDocument;return He.call(t||e,e,k.SHOW_ELEMENT|k.SHOW_COMMENT|k.SHOW_TEXT|k.SHOW_PROCESSING_INSTRUCTION|k.SHOW_CDATA_SECTION,null)},un=function(e){return e=A(e,Ye," "),e=A(e,qe," "),e=A(e,Xe," ")},fn=function(e){var t;e.normalize();const n=Re?Re(e):e.ownerDocument,o=He.call(n||e,e,k.SHOW_TEXT|k.SHOW_COMMENT|k.SHOW_CDATA_SECTION|k.SHOW_PROCESSING_INSTRUCTION,null);let r=o.nextNode();for(;r;)r.data=un(r.data),r=o.nextNode();const i=null===(t=e.querySelectorAll)||void 0===t?void 0:t.call(e,"template");i&&m(i,e=>{mn(e.content)&&fn(e.content)})},pn=function(e){const t=De?De(e):null;return"string"==typeof t&&("form"===$t(t)&&("string"!=typeof e.nodeName||"string"!=typeof e.textContent||"function"!=typeof e.removeChild||e.attributes!==Oe(e)||"function"!=typeof e.removeAttribute||"function"!=typeof e.setAttribute||"string"!=typeof e.namespaceURI||"function"!=typeof e.insertBefore||"function"!=typeof e.hasChildNodes||e.nodeType!==ve(e)||e.childNodes!==Ne(e)))},mn=function(e){if(!ve||"object"!=typeof e||null===e)return!1;try{return ve(e)===he}catch(e){return!1}},dn=function(e){if(!ve||"object"!=typeof e||null===e)return!1;try{return"number"==typeof ve(e)}catch(e){return!1}};function hn(e,t,n){0!==e.length&&m(e,e=>{e.call(o,t,n,Kt)})}const gn=function(e,t,n,o){return 0===e.length?t:t===n||t===o?P(t):t},yn=function(e,t){if(hn(We.beforeSanitizeElements,e,null),e!==t&&null===_e(e))return Ot&&ln(e),!0;if(pn(e))return nn(e),!0;const n=$t(De?De(e):e.nodeName);if(et=gn(We.uponSanitizeElement,et,tt,gt),hn(We.uponSanitizeElement,e,{tagName:n,allowedTags:et}),e!==t&&null===_e(e))return Ot&&ln(e),!0;if(function(e,t){return!!(mt&&e.hasChildNodes()&&!dn(e.firstElementChild)&&I(ae,e.textContent)&&I(ae,e.innerHTML))||!(!mt||e.namespaceURI!==zt||"style"!==t||!dn(e.firstElementChild))||e.nodeType===pe||!(!mt||e.nodeType!==me||!I(le,e.data))}(e,n))return nn(e),!0;if(it[n]||!(lt.tagCheck instanceof Function&&lt.tagCheck(n))&&!et[n]){const o=function(e,t,n){if(!it[t]&&Sn(t)){if(rt.tagNameCheck instanceof RegExp&&I(rt.tagNameCheck,t))return!1;if(rt.tagNameCheck instanceof Function&&rt.tagNameCheck(t))return!1}if(wt&&!Dt[t]){const t=_e(e),o=Ne(e);if(o&&t)for(let r=o.length-1;r>=0;--r){const i=e===n?Se(o[r],!0):o[r];t.insertBefore(i,Ae(e))}}return nn(e),!0}(e,n,t);return!1===o&&hn(We.afterSanitizeElements,e,null),o}if((ve?ve(e):e.nodeType)===ue&&!tn(e))return nn(e),!0;if(("noscript"===n||"noembed"===n||"noframes"===n)&&I(ce,e.innerHTML))return nn(e),!0;if(pt&&e.nodeType===fe){const t=un(e.textContent);e.textContent!==t&&(g(o.removed,{element:e.cloneNode()}),e.textContent=t)}return hn(We.afterSanitizeElements,e,null),!1},bn=function(e,t,n){if(at[t])return!1;if(mt&&"patchsrc"===t)return!1;if(mt&&"for"===t&&"label"!==e&&"output"!==e)return!1;if(At&&("id"===t||"name"===t)&&(n in r||n in Vt))return!1;const o=nt[t]||lt.attributeCheck instanceof Function&&lt.attributeCheck(t,e);if(st&&I($e,t));else if(ct&&I(Ke,t));else if(o)if(xt[t]);else if(I(Qe,A(n,Ze,"")));else if("src"!==t&&"xlink:href"!==t&&"href"!==t||"script"===e||0!==N(n,"data:")||!Ct[e]){if(ut&&!I(Ve,A(n,Ze,"")));else if(n)return!1}else;else if(!(Sn(e)&&(rt.tagNameCheck instanceof RegExp&&I(rt.tagNameCheck,e)||rt.tagNameCheck instanceof Function&&rt.tagNameCheck(e))&&(rt.attributeNameCheck instanceof RegExp&&I(rt.attributeNameCheck,t)||rt.attributeNameCheck instanceof Function&&rt.attributeNameCheck(t,e))||"is"===t&&rt.allowCustomizedBuiltInElements&&(rt.tagNameCheck instanceof RegExp&&I(rt.tagNameCheck,n)||rt.tagNameCheck instanceof Function&&rt.tagNameCheck(n))))return!1;return!0},Tn=M({},["annotation-xml","color-profile","font-face","font-face-format","font-face-name","font-face-src","font-face-uri","missing-glyph"]),Sn=function(e){return!Tn[T(e)]&&I(Je,e)},En=function(e,t,n,o){if(Ce&&"object"==typeof be&&"function"==typeof be.getAttributeType&&!n)switch(be.getAttributeType(e,t)){case"TrustedHTML":return ze(o);case"TrustedScriptURL":return function(e){Me(),Le++;try{return Ce.createScriptURL(e)}finally{Le--}}(o)}return o},An=function(e,t,n,r){try{n?e.setAttributeNS(n,t,r):e.setAttribute(t,r),pn(e)?nn(e):h(o.removed)}catch(n){rn(t,e)}},Nn=function(e){hn(We.beforeSanitizeAttributes,e,null);const t=e.attributes;if(!t||pn(e))return;nt=gn(We.uponSanitizeAttribute,nt,ot,yt);const n={attrName:"",attrValue:"",keepAttr:!0,allowedAttributes:nt,forceKeepAttr:void 0};let o=t.length;const r=$t(e.nodeName);for(;o--;){const i=t[o],a=i.name,l=i.namespaceURI,c=i.value,s=$t(a),u=c;let f="value"===a?u:_(u);n.attrName=s,n.attrValue=f,n.keepAttr=!0,n.forceKeepAttr=void 0,hn(We.uponSanitizeAttribute,e,n),f=n.attrValue,!Nt||"id"!==s&&"name"!==s||0===N(f,_t)||(rn(a,e),f=_t+f),mt&&I(/((--!?|])>)|<\/(style|script|title|xmp|textarea|noscript|iframe|noembed|noframes)/i,f)?rn(a,e):"attributename"===s&&E(f,"href")?rn(a,e):n.forceKeepAttr||(n.keepAttr&&(ft||!I(se,f))?(pt&&(f=un(f)),bn(r,s,f)?(f=En(r,s,l,f),f!==u&&An(e,a,l,f)):rn(a,e)):rn(a,e))}hn(We.afterSanitizeAttributes,e,null)},_n=function(e){let t=null;const n=sn(e);for(hn(We.beforeSanitizeShadowDOM,e,null);t=n.nextNode();){hn(We.uponSanitizeShadowNode,t,null),yn(t,e),Nn(t),mn(t.content)&&_n(t.content);if((ve?ve(t):t.nodeType)===ue){const e=we(t);mn(e)&&(wn(e),_n(e))}}hn(We.afterSanitizeShadowDOM,e,null)},wn=function(e){const t=[{node:e,shadow:null}];for(;t.length>0;){const e=t.pop();if(e.shadow){_n(e.shadow);continue}const n=e.node,o=(ve?ve(n):n.nodeType)===ue,r=Ne(n);if(r)for(let e=r.length-1;e>=0;--e)t.push({node:r[e],shadow:null});if(o){const e=De?De(n):null;if("string"==typeof e&&"template"===$t(e)){const e=n.content;mn(e)&&t.push({node:e,shadow:null})}}if(o){const e=we(n);mn(e)&&t.push({node:null,shadow:e},{node:e,shadow:null})}}};return o.sanitize=function(e){let t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},n=null,r=null,a=null,l=null;if(Ut=!e,Ut&&(e="\x3c!--\x3e"),"string"!=typeof e&&!dn(e)&&"string"!=typeof(e=function(e){switch(typeof e){case"string":return e;case"number":return w(e);case"boolean":return O(e);case"bigint":return v?v(e):"0";case"symbol":return D?D(e):"Symbol()";case"undefined":default:return C(e);case"function":case"object":{if(null===e)return C(e);const t=e,n=U(t,"toString");if("function"==typeof n){const e=n(t);return"string"==typeof e?e:C(e)}return C(e)}}}(e)))throw x("dirty is not a string, aborting");if(!o.isSupported)return e;ht?(et=gt,nt=yt):Jt(t),(We.uponSanitizeElement.length>0||We.uponSanitizeAttribute.length>0)&&(et=P(et)),We.uponSanitizeAttribute.length>0&&(nt=P(nt)),o.removed=[];const c=Ot&&"string"!=typeof e&&dn(e);if(c){!function(e){if(!mt)return;const t=[e];for(;t.length>0;){const e=t.pop(),n=ve?ve(e):e.nodeType;if(n===pe||n===me&&I(le,e.data)){try{Ee(e)}catch(e){}continue}if(n===ue){const t=e,n=$t(De?De(e):e.nodeName);try{t.hasAttribute&&t.hasAttribute("patchsrc")&&t.removeAttribute("patchsrc"),t.hasAttribute&&t.hasAttribute("for")&&"label"!==n&&"output"!==n&&t.removeAttribute("for")}catch(e){}}const o=Ne(e);if(o)for(let e=o.length-1;e>=0;--e)t.push(o[e])}}(e);const t=De?De(e):e.nodeName;if("string"==typeof t){const n=$t(t);if(!et[n]||it[n])throw on(e),x("root node is forbidden and cannot be sanitized in-place")}if(pn(e))throw on(e),x("root node is clobbered and cannot be sanitized in-place");try{wn(e)}catch(t){throw on(e),t}}else if(dn(e))n=cn("\x3c!----\x3e"),r=n.ownerDocument.importNode(e,!0),r.nodeType===ue&&"BODY"===r.nodeName||"HTML"===r.nodeName?n=r:n.appendChild(r),wn(r);else{if(!Tt&&!pt&&!dt&&-1===e.indexOf("<"))return Ce&&Et?ze(e):e;if(n=cn(e),!n)return Tt?null:Et?xe:""}n&&bt&&nn(n.firstChild);const s=c?e:n;try{const e=sn(s);for(;a=e.nextNode();)yn(a,s),Nn(a),mn(a.content)&&_n(a.content)}catch(t){throw c&&(on(e),m(o.removed,e=>{e.element&&ln(e.element)})),t}if(c)return m(o.removed,e=>{e.element&&ln(e.element)}),pt&&fn(e),e;if(Tt){if(pt&&fn(n),St)for(l=je.call(n.ownerDocument);n.firstChild;)l.appendChild(n.firstChild);else l=n;return(nt.shadowroot||nt.shadowrootmode)&&(l=Ge.call(i,l,!0)),l}let u=dt?n.outerHTML:n.innerHTML;return dt&&et["!doctype"]&&n.ownerDocument&&n.ownerDocument.doctype&&n.ownerDocument.doctype.name&&I(re,n.ownerDocument.doctype.name)&&(u="<!DOCTYPE "+n.ownerDocument.doctype.name+">\n"+u),pt&&(u=un(u)),Ce&&Et?ze(u):u},o.setConfig=function(){Jt(arguments.length>0&&void 0!==arguments[0]?arguments[0]:{}),ht=!0,gt=et,yt=nt},o.clearConfig=function(){Kt=null,ht=!1,gt=null,yt=null,Ce=Ie,xe=""},o.isValidAttribute=function(e,t,n){Kt||Jt({});const o=$t(e),r=$t(t);return bn(o,r,n)},o.addHook=function(e,t){"function"==typeof t&&R(We,e)&&g(We[e],t)},o.removeHook=function(e,t){if(R(We,e)){if(void 0!==t){const n=d(We[e],t);return-1===n?void 0:y(We[e],n,1)[0]}return h(We[e])}},o.removeHooks=function(e){R(We,e)&&(We[e]=[])},o.removeAllHooks=function(){We={afterSanitizeAttributes:[],afterSanitizeElements:[],afterSanitizeShadowDOM:[],beforeSanitizeAttributes:[],beforeSanitizeElements:[],beforeSanitizeShadowDOM:[],uponSanitizeAttribute:[],uponSanitizeElement:[],uponSanitizeShadowNode:[]}},o}();return be});
+//# sourceMappingURL=purify.min.js.map
+  </script>
+
+  <script>
+  (function() {
+    const DATA = 'eyJ2IjoxLCJlbmMiOmZhbHNlLCJkIjoiZU5yTlZFMXIzREFRX1N1RHptWWhXMmlUdmFWTkQ0VlNTZ21FMHVRd2xzZTJ1cklrSkRtYkpleF83NVBpRGFGSkthU1hnZzhhYWI3ZW0zbS1WN2RxYzlLb1NUS3J6YjNLSmx0UkczVWhrNmNnTVhuSEc0cGloWk9RdU1FNGthZ2ExVW5TMFlSc3ZJUDdPVTNHbVlrdDhTQXVIeU1iU3FNSlFUcmlSRXpKREE3bjg4LVhWeF9may1hUVppc3J1aHhOSW54NUZOb2ExMTA3MzFOdnJCQzdKZF9PejdZajV5TksyRDM2NFpveVdEYXVvZG5kU2pTOTRSWXhXZTd5Q2cxcU9HWHBnTzdkNmR1ejA1TTM2N09UOVJwSWZRZlhGeDRzdXdGUXhLbERvMXJyOVRhcHpROVFnc3NSQ1cwbFN2LWRuRVB6RUJUVWdfdF9SODZ4d1FYVi1xSE5ieDZUXzczMzczNG1qaWlHanFMMHMzMEdkMFhGSjBRSnhVLVBZRkdzSDFLRHMtZ3RvWHJDa2x3N04wOHR6ZzBhNzZqa1FwSU1IdWZXbWpUaWRwOUg0d1lnNVV3akFEZ1Byamdsc0ZMUVowbVowbXl5X0JFQkdFdVBiOGlhOGV4ako3R011MmVicEZHSW44cGcxUmRCYTlUT1V3QzZwVXZhbVR6Nk9lTm00cXhyUDQtUUFEbkhmZG10Yzd2amZhSTR1OW9aYUxGUDJxTldlZzh1TWc5RFNjQkh6a3JvcDc3TU9rdWdubzBGR3luN3NGQVNmTXdydXZBVnVabEM5TGNHSkhIME05NE5KbmZUS09jaHZicVlCZktyUVJTVzZuSy1Gc294d2I4Qk90eThQTXF2Y0JYSFRqOWZ5YXFJUlItMHc1NW9Qd1VJb3F0RkZ4a1ZDaXFndWw3NktLdXVLSGNyLTlXMS0xQVpxY0p6ZzYyYkcxbG5zQW1CbFVqdFhTN3lLbG1MWFRKem5zRkdDNGx0MDRiNGV0RVdDbHJQMkRQVXRmYkpjaHYzVTNSZWtEWXE1WDM1dXdMUEtGUDV6ZktjUFdEMUtBVXJzVXV3V0d1cGRtdG5nVDN4M1JXc3FWT0h3eThKYmUxaiIsInMiOiJYMW9tR01iSmJZMFJCTGJOU0lSbUYzVkxRWnVqaEpFR1RxQWU2OG5pSWdHVUVnVUNPQnZUV1JyT0JFTFJ2NzdNSUxsUHVlTVFQRjQzOU9iZUpXcG9wQSIsInBrIjoiTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFZDJuOTNUZ1ZHRVJhVzhsVEZBRW5iakxPVUprdGJwOUlMSm5BNVhXWklHOXF3LVJjRzE5emRtN3FGdUtDVzJCbjdkeHZrelBWbEk2TTA3a01ta2VRc2cifQ';
+    const IS_ENCRYPTED = false;
+    const T = {"loading":"Loading...","encryptedContent":"Encrypted content","enterPassword":"Enter password to access the content","passwordLabel":"Password","passwordPlaceholder":"Password...","decrypt":"Decrypt","decrypting":"Decrypting...","error":"Error","wrongPassword":"Wrong password or corrupted data","verified":"✓ Verified","signed":"Signed — verification runs after decryption","invalidSignature":"⚠ Invalid signature — content was modified after signing","metaUnsigned":"✓ Content verified — title and header are not signed","independentNote":"This badge is rendered by the file itself — for independent proof run: altweb verify","publicKeyLabel":"Signer public key","authorPrefix":"Author:","incompatibleBrowser":"Incompatible browser. Requires Chrome 80+, Firefox 113+, or Safari 16.4+","branding":"Signed context capsules"};
+    const app = document.getElementById('app');
+
+    // Accent color palette with theme-aware variants
+    const accentColors = {
+      blue: { light: '#2563eb', dark: '#93c5fd' },
+      green: { light: '#059669', dark: '#6ee7b7' },
+      purple: { light: '#7c3aed', dark: '#c4b5fd' },
+      rose: { light: '#e11d48', dark: '#fda4af' },
+      orange: { light: '#ea580c', dark: '#fdba74' },
+      cyan: { light: '#0891b2', dark: '#67e8f9' },
+    };
+
+    function getAccentHex(colorName, theme, prefersDark) {
+      const name = colorName || 'blue';
+      const color = accentColors[name] || accentColors.blue;
+      const isDark = theme === 'dark' || (theme === 'auto' && prefersDark);
+      return isDark ? color.dark : color.light;
+    }
+
+    function b64urlDecode(str) {
+      str = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (str.length % 4) str += '=';
+      const binary = atob(str);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    async function deriveKey(password, salt) {
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+      return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+      );
+    }
+
+    async function decrypt(encrypted, password) {
+      const salt = b64urlDecode(encrypted.salt);
+      const iv = b64urlDecode(encrypted.iv);
+      const ciphertext = b64urlDecode(encrypted.ct);
+      const key = await deriveKey(password, salt);
+      const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+      return new Uint8Array(decrypted);
+    }
+
+    async function decompress(data) {
+      if (typeof DecompressionStream === 'undefined') {
+        throw new Error(T.incompatibleBrowser);
+      }
+      const ds = new DecompressionStream('deflate');
+      const writer = ds.writable.getWriter();
+      writer.write(data);
+      writer.close();
+      const reader = ds.readable.getReader();
+      const chunks = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+      }
+      const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+      const result = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return result;
+    }
+
+    // Mirrors the core verify(): ECDSA P-256 / SHA-256, SPKI public key,
+    // raw signature — over the exact compressed bytes that were signed.
+    async function verifySignature(signedBytes, signatureB64, publicKeyB64) {
+      try {
+        const key = await crypto.subtle.importKey(
+          'spki',
+          b64urlDecode(publicKeyB64),
+          { name: 'ECDSA', namedCurve: 'P-256' },
+          false,
+          ['verify']
+        );
+        return await crypto.subtle.verify(
+          { name: 'ECDSA', hash: 'SHA-256' },
+          key,
+          b64urlDecode(signatureB64),
+          signedBytes
+        );
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function decodePage(password) {
+      const envelopeBytes = b64urlDecode(DATA);
+      const envelopeJson = new TextDecoder().decode(envelopeBytes);
+      const envelope = JSON.parse(envelopeJson);
+
+      let page;
+      // The signature covers the compressed payload bytes; each branch
+      // already holds them — keep them for real verification below.
+      let signedBytes = null;
+
+      if (envelope.enc) {
+        if (!password) throw new Error('Password required');
+
+        // Check for partial encryption (visible meta in envelope.m)
+        if (envelope.m) {
+          // Partial encryption: meta visible, blocks encrypted
+          const metaCompressed = b64urlDecode(envelope.m);
+          const metaBytes = await decompress(metaCompressed);
+          const visibleMeta = JSON.parse(new TextDecoder().decode(metaBytes));
+
+          // Decrypt blocks
+          const blocksCompressed = await decrypt(envelope.e, password);
+          signedBytes = blocksCompressed;
+          const blocksBytes = await decompress(blocksCompressed);
+          const blocksData = JSON.parse(new TextDecoder().decode(blocksBytes));
+
+          // Merge visible meta with decrypted blocks
+          page = {
+            v: blocksData.v || 1,
+            meta: visibleMeta.meta,
+            style: visibleMeta.style,
+            blocks: blocksData.blocks || [],
+            nav: blocksData.nav,
+            indexHash: blocksData.indexHash,
+          };
+        } else {
+          // Full encryption: everything encrypted
+          const compressed = await decrypt(envelope.e, password);
+          signedBytes = compressed;
+          const jsonBytes = await decompress(compressed);
+          page = JSON.parse(new TextDecoder().decode(jsonBytes));
+        }
+      } else {
+        // Public content
+        const compressed = b64urlDecode(envelope.d);
+        signedBytes = compressed;
+        const jsonBytes = await decompress(compressed);
+        page = JSON.parse(new TextDecoder().decode(jsonBytes));
+      }
+
+      // REAL cryptographic verification — a present-but-invalid signature
+      // must come back loud, never as "verified".
+      const signed = !!(envelope.s && envelope.pk);
+      const verified = signed
+        ? await verifySignature(signedBytes, envelope.s, envelope.pk)
+        : false;
+      const signatureInvalid = signed && !verified;
+      const fingerprint = verified ? await computeFingerprint(envelope.pk) : null;
+
+      return {
+        page,
+        signed,
+        verified,
+        signatureInvalid,
+        // In partial encryption the signature covers only the blocks;
+        // the visible meta (title/description/author) is NOT signed.
+        partialSigned: signed && !!envelope.m,
+        fingerprint,
+        publicKey: verified ? envelope.pk : null,
+      };
+    }
+
+    async function computeFingerprint(publicKeyBase64) {
+      const publicKeyData = b64urlDecode(publicKeyBase64);
+      const hash = await crypto.subtle.digest('SHA-256', publicKeyData);
+      const hashArray = new Uint8Array(hash);
+      // Format: first 8 bytes as hex with colons
+      return Array.from(hashArray.slice(0, 8))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join(':');
+    }
+
+    // Helper to get visible meta from envelope (for password prompt)
+    async function getVisibleMeta() {
+      try {
+        const envelopeBytes = b64urlDecode(DATA);
+        const envelopeJson = new TextDecoder().decode(envelopeBytes);
+        const envelope = JSON.parse(envelopeJson);
+
+        if (envelope.m) {
+          const metaCompressed = b64urlDecode(envelope.m);
+          const metaBytes = await decompress(metaCompressed);
+          return JSON.parse(new TextDecoder().decode(metaBytes));
+        }
+      } catch (e) {
+        console.error('Error getting visible meta:', e);
+      }
+      return null;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // URL scheme guards mirror core's sanitize.ts so the standalone path is as
+    // safe as the core path, not just CSP-dependent. encodePage() already
+    // sanitizes at build time; this re-guards at render time because the
+    // runtime decodes whatever hash it is handed, including a hand-crafted
+    // envelope that never went through the encoder.
+    function safeHref(url) {
+      try {
+        var p = new URL(String(url));
+        if (p.protocol === 'http:' || p.protocol === 'https:' || p.protocol === 'mailto:') return url;
+        return '#blocked';
+      } catch (e) {
+        return '#invalid';
+      }
+    }
+    function safeImgSrc(url) {
+      var s = String(url);
+      if (/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+$/i.test(s)) return s;
+      try {
+        var p = new URL(s);
+        if (p.protocol === 'http:' || p.protocol === 'https:') return s;
+      } catch (e) {}
+      return '';
+    }
+
+    function formatTimestamp(timestamp, mode) {
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      if (mode === 'date') {
+        return year + '-' + month + '-' + day;
+      }
+
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes;
+    }
+
+    // Convert inline markdown to HTML
+    // Handles: **bold**, *italic*, __underline__, ~~strike~~, ==highlight==, `code`, [link](url)
+    function inlineMarkdownToHtml(text) {
+      if (!text) return '';
+      var html = text;
+      // Escape HTML entities first (but preserve our markdown)
+      html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      // Links [text](url) - do first to avoid interference
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      // Bold **text** - non-greedy to handle nested/adjacent
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // Italic *text* - non-greedy
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+      // Underline __text__ - non-greedy
+      html = html.replace(/__(.+?)__/g, '<u>$1</u>');
+      // Strikethrough ~~text~~ - non-greedy
+      html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+      // Highlight ==text== - non-greedy
+      html = html.replace(/==(.+?)==/g, '<mark>$1</mark>');
+      // Inline code `text`
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // Convert newlines to <br>
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    }
+
+    function formatText(str) {
+      if (!str) return '';
+      // First convert markdown to HTML, then sanitize
+      var html = inlineMarkdownToHtml(str);
+      // Use DOMPurify for secure HTML sanitization
+      // Allow only safe inline formatting tags, no attributes except href on links
+      return DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ['strong', 'b', 'em', 'i', 'code', 'br', 'a', 'u', 's', 'mark', 'sub', 'sup'],
+        ALLOWED_ATTR: ['href', 'target', 'rel'],
+        ALLOW_DATA_ATTR: false,
+        ADD_ATTR: ['target'],
+        FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'svg', 'math'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+      });
+    }
+
+    function renderListNodes(nodes, tag, alignClass) {
+      return '<' + tag + (alignClass ? ' class="' + alignClass + '"' : '') + '>' +
+        nodes.map(function(node) {
+          var task = node.task
+            ? '<input type="checkbox" disabled' + (node.done ? ' checked' : '') + '> '
+            : '';
+          var children = (node.children && node.children.length)
+            ? renderListNodes(node.children, tag, '')
+            : '';
+          return '<li' + (node.task ? ' class="task-item"' : '') + '>' +
+            task + formatText(node.c) + children + '</li>';
+        }).join('') +
+        '</' + tag + '>';
+    }
+
+    function renderBlock(block) {
+      const alignClass = block.align ? ' text-' + block.align : '';
+
+      switch(block.t) {
+        case 'h':
+          const level = block.l || 2;
+          return '<h' + level + ' class="' + alignClass + '">' + formatText(block.c) + '</h' + level + '>';
+        case 'p':
+          return '<p class="' + alignClass + '">' + formatText(block.c) + '</p>';
+        case 'a':
+          return '<a href="' + escapeHtml(safeHref(block.url)) + '" target="_blank" rel="noopener noreferrer" class="link-card">' +
+            '<div class="link-inner">' +
+            (block.icon ? '<span class="link-icon">' + escapeHtml(block.icon) + '</span>' : '') +
+            '<div>' +
+            '<div class="link-title">' + escapeHtml(block.title) + '</div>' +
+            (block.desc ? '<div class="link-desc">' + escapeHtml(block.desc) + '</div>' : '') +
+            '</div></div></a>';
+        case 'code':
+          return '<div class="code-wrapper">' +
+            (block.lang ? '<div class="code-lang">' + escapeHtml(block.lang) + '</div>' : '') +
+            '<pre><code>' + escapeHtml(block.c) + '</code></pre></div>';
+        case 'q':
+          return '<blockquote><p>' + formatText(block.c) + '</p>' +
+            (block.src ? '<cite class="quote-source">— ' + escapeHtml(block.src) + '</cite>' : '') +
+            '</blockquote>';
+        case 'list':
+          const tag = block.ordered ? 'ol' : 'ul';
+          // the nodes tree (nesting + task state) takes priority; items[] = fallback
+          const listTree = (block.nodes && block.nodes.length)
+            ? block.nodes
+            : (block.items || []).map(function(c) { return { c: c }; });
+          return renderListNodes(listTree, tag, alignClass);
+        case 'hr':
+          return '<hr>';
+        case 'space':
+          return '<div style="height:' + (block.h || 40) + 'px"></div>';
+        case 'img':
+          if (!block.d) return '';
+          return '<figure><img src="' + escapeHtml(safeImgSrc(block.d)) + '" alt="' + escapeHtml(block.alt || '') + '">' +
+            (block.cap ? '<figcaption>' + escapeHtml(block.cap) + '</figcaption>' : '') + '</figure>';
+        case 'tbl':
+          return '<div class="table-wrapper"><table>' +
+            '<thead><tr>' + (block.headers || []).map(function(h) {
+              return '<th>' + escapeHtml(h) + '</th>';
+            }).join('') + '</tr></thead>' +
+            '<tbody>' + (block.rows || []).map(function(row) {
+              return '<tr>' + row.map(function(cell) {
+                return '<td>' + escapeHtml(cell) + '</td>';
+              }).join('') + '</tr>';
+            }).join('') + '</tbody></table></div>';
+        default:
+          return '';
+      }
+    }
+
+    function renderPage(result) {
+      const { page, verified, signatureInvalid, partialSigned, fingerprint, publicKey } = result;
+      const style = page.style || {};
+      const meta = page.meta || {};
+
+      // The signed title is authoritative at runtime: the static <title>
+      // of the HTML shell is not covered by the signature and can be
+      // spoofed, so sync it from the decoded (and, when signed, verified)
+      // page metadata. Invalid signatures get a loud prefix.
+      if (typeof meta.title === 'string' && meta.title) {
+        document.title = (signatureInvalid ? '⚠ ' : '') + meta.title;
+      } else if (signatureInvalid) {
+        document.title = '⚠ ' + document.title;
+      }
+
+      // Apply theme class to body
+      if (style.theme === 'dark') {
+        document.body.classList.add('theme-dark');
+      } else if (style.theme === 'light') {
+        document.body.classList.add('theme-light');
+      }
+
+      // Apply custom colors
+      if (style.bg) document.body.style.backgroundColor = style.bg;
+      if (style.fg) document.body.style.color = style.fg;
+
+      // Apply theme-aware accent color
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const accentHex = getAccentHex(style.accent, style.theme || 'auto', prefersDark);
+      document.documentElement.style.setProperty('--accent-color', accentHex);
+
+      // Determine max width class
+      const maxWClass = { sm: 'max-sm', md: 'max-md', lg: 'max-lg', xl: 'max-xl' }[style.maxW] || 'max-md';
+
+      // Determine font class
+      const fontClass = { sans: 'font-sans', serif: 'font-serif', mono: 'font-mono' }[style.font] || 'font-sans';
+
+      let html = '<div class="page-wrapper ' + fontClass + '">';
+
+      // Signature header: three states — verified (green), invalid (red
+      // banner), unsigned (no badge at all).
+      if (verified && fingerprint) {
+        const sigLabel = partialSigned ? T.metaUnsigned : T.verified;
+        html += '<div class="sig-header"><div class="sig-content page-container ' + maxWClass + '">' +
+          '<span>' + sigLabel + '</span>' +
+          '<code class="sig-fingerprint">' + escapeHtml(fingerprint) + '</code>' +
+          (publicKey
+            ? '<details class="sig-key"><summary>' + T.publicKeyLabel + '</summary>' +
+              '<code>' + escapeHtml(publicKey) + '</code></details>'
+            : '') +
+          '</div>' +
+          '<div class="sig-note page-container ' + maxWClass + '">' + T.independentNote + '</div>' +
+          '</div>';
+      } else if (signatureInvalid) {
+        html += '<div class="sig-header sig-invalid"><div class="sig-content page-container ' + maxWClass + '">' +
+          '<span>' + T.invalidSignature + '</span>' +
+          '</div>' +
+          '<div class="sig-note page-container ' + maxWClass + '">' + T.independentNote + '</div>' +
+          '</div>';
+      }
+
+      // Document header (3-column: logo+tagline | title | author+date)
+      const header = meta.header || {};
+      const hasDocHeader = header.logo || header.customText || meta.title || header.showAuthor || header.showDate;
+      if (hasDocHeader) {
+        html += '<div class="doc-header"><div class="page-container ' + maxWClass + '">';
+
+        // Main row: Logo+Tagline | Document Name | Author+Date
+        html += '<div class="doc-header-row">';
+
+        // Left side: logo + tagline
+        html += '<div class="doc-header-left">';
+        if (header.logo) {
+          html += '<img src="' + escapeHtml(safeImgSrc(header.logo)) + '" alt="Logo" class="doc-header-logo">';
+        }
+        if (header.customText) {
+          html += '<span class="doc-header-tagline">' + escapeHtml(header.customText) + '</span>';
+        }
+        html += '</div>';
+
+        // Center: Document name (title)
+        html += '<div class="doc-header-center">';
+        if (meta.title) {
+          html += '<span class="doc-header-title">' + escapeHtml(meta.title) + '</span>';
+        }
+        html += '</div>';
+
+        // Right side: author + date
+        html += '<div class="doc-header-right">';
+        if (header.showAuthor && meta.author) {
+          html += '<span>' + escapeHtml(meta.author) + '</span>';
+        }
+        if (header.showDate && meta.created) {
+          html += '<time datetime="' + new Date(meta.created).toISOString() + '">' +
+            formatTimestamp(meta.created, 'date') + '</time>';
+        }
+        html += '</div>';
+
+        html += '</div>';
+        html += '</div></div>';
+      }
+
+      // Document sub-header (description as foreword - italic)
+      if (meta.description) {
+        html += '<div class="doc-subheader"><div class="page-container ' + maxWClass + '">';
+        html += '<p class="doc-subheader-desc">' + escapeHtml(meta.description) + '</p>';
+        html += '</div></div>';
+      }
+
+      // Main content
+      html += '<main class="page-main"><div class="page-container ' + maxWClass + '">';
+
+      // Page header - fallback for title/author when no doc-header (description is in sub-header)
+      if (!hasDocHeader && (meta.title || meta.author)) {
+        html += '<header class="page-header">';
+        if (meta.title) {
+          html += '<h1 class="page-title">' + escapeHtml(meta.title) + '</h1>';
+        }
+        if (meta.author) {
+          html += '<p class="page-author">' + T.authorPrefix + ' ' + escapeHtml(meta.author) + '</p>';
+        }
+        html += '</header>';
+      }
+
+      // Blocks
+      html += '<article>';
+      (page.blocks || []).forEach(function(block) {
+        html += '<div class="block">' + renderBlock(block) + '</div>';
+      });
+      html += '</article>';
+
+      html += '</div></main>';
+
+      // Document footer (Word-style: copyright + custom | links)
+      const footer = meta.footer || {};
+      const hasDocFooter = footer.copyright || footer.customText || (footer.links && footer.links.length > 0);
+      if (hasDocFooter) {
+        html += '<div class="doc-footer"><div class="page-container ' + maxWClass + '">';
+        html += '<div class="doc-footer-inner">';
+
+        // Left side: copyright + custom text
+        html += '<div class="doc-footer-left">';
+        if (footer.copyright) {
+          html += '<span>' + escapeHtml(footer.copyright) + '</span>';
+        }
+        if (footer.customText) {
+          html += '<span>' + escapeHtml(footer.customText) + '</span>';
+        }
+        html += '</div>';
+
+        // Right side: links
+        if (footer.links && footer.links.length > 0) {
+          html += '<div class="doc-footer-links">';
+          footer.links.forEach(function(link) {
+            html += '<a href="' + escapeHtml(safeHref(link.url)) + '" target="_blank" rel="noopener noreferrer">' +
+              escapeHtml(link.label) + '</a>';
+          });
+          html += '</div>';
+        }
+
+        html += '</div></div></div>';
+      }
+
+      // Footer (powered by + timestamp)
+      const showPoweredBy = footer.poweredBy !== false;
+      html += '<footer class="page-footer"><div class="page-container ' + maxWClass + '">';
+      html += '<div class="footer-content">';
+      if (showPoweredBy) {
+        html += '<span>ALTWEB</span>';
+      }
+
+      // Timestamp display
+      if (style.showTimestamp && style.showTimestamp !== 'none' && meta.modified) {
+        if (showPoweredBy) {
+          html += '<span class="footer-dot">•</span>';
+        }
+        html += '<time class="footer-timestamp" datetime="' + new Date(meta.modified).toISOString() + '">';
+        html += formatTimestamp(meta.modified, style.showTimestamp);
+        html += '</time>';
+      }
+
+      html += '</div></div></footer>';
+
+      html += '</div>';
+      app.innerHTML = html;
+    }
+
+    async function showPasswordModal() {
+      // Check envelope for signature and visible meta
+      let hasSignature = false;
+      let visibleMeta = null;
+      try {
+        const envelopeBytes = b64urlDecode(DATA);
+        const envelopeJson = new TextDecoder().decode(envelopeBytes);
+        const envelope = JSON.parse(envelopeJson);
+        hasSignature = !!envelope.s;
+        visibleMeta = await getVisibleMeta();
+      } catch (e) {
+        console.error('Error parsing envelope:', e);
+      }
+
+      // Build header HTML based on visible meta
+      let headerHtml;
+      if (visibleMeta && visibleMeta.meta) {
+        const meta = visibleMeta.meta;
+        headerHtml = `
+          <div class="decrypt-header decrypt-header-meta">
+            <div class="meta-row">
+              <div class="meta-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <div class="meta-info">
+                <h1 class="meta-title">${escapeHtml(meta.title) || T.encryptedContent}</h1>
+                ${meta.description ? '<p class="meta-desc">' + escapeHtml(meta.description) + '</p>' : ''}
+                ${meta.author ? '<p class="meta-author">' + T.authorPrefix + ' ' + escapeHtml(meta.author) + '</p>' : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        headerHtml = `
+          <div class="decrypt-header">
+            <div class="decrypt-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <h1 class="decrypt-title">${T.encryptedContent}</h1>
+            <p class="decrypt-subtitle">${T.enterPassword}</p>
+          </div>
+        `;
+      }
+
+      app.innerHTML = `
+        <div class="decrypt-screen">
+          <div class="decrypt-container">
+            <div class="decrypt-card">
+              ${headerHtml}
+
+              <form class="decrypt-form" id="decrypt-form">
+                <div>
+                  <label class="form-label">${T.passwordLabel}</label>
+                  <div class="input-wrapper">
+                    <input
+                      type="password"
+                      id="password"
+                      class="decrypt-input"
+                      placeholder="${T.passwordPlaceholder}"
+                      autofocus
+                    >
+                    <button type="button" id="toggle-pwd" class="toggle-password"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+                  </div>
+                </div>
+
+                <div id="error" class="decrypt-error" style="display:none"></div>
+
+                <button type="submit" id="submit" class="decrypt-button">${T.decrypt}</button>
+              </form>
+
+              ${hasSignature ? `
+                <div class="decrypt-footer">
+                  <div class="signed-badge">
+                    <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>${T.signed}</span>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="decrypt-branding">
+              <p><strong>ALTWEB</strong> — ${T.branding}</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      let showPwd = false;
+      const pwdInput = document.getElementById('password');
+      const toggleBtn = document.getElementById('toggle-pwd');
+
+      toggleBtn.onclick = () => {
+        showPwd = !showPwd;
+        pwdInput.type = showPwd ? 'text' : 'password';
+        toggleBtn.innerHTML = showPwd
+          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+      };
+
+      const submit = async (e) => {
+        if (e) e.preventDefault();
+        const pwd = pwdInput.value;
+        const errEl = document.getElementById('error');
+        const submitBtn = document.getElementById('submit');
+
+        if (!pwd.trim()) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = T.decrypting;
+
+        try {
+          const result = await decodePage(pwd);
+          renderPage(result);
+        } catch (err) {
+          console.error('Decryption error:', err);
+          errEl.textContent = err.message || T.wrongPassword;
+          errEl.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = T.decrypt;
+        }
+      };
+
+      document.getElementById('decrypt-form').onsubmit = submit;
+    }
+
+    async function init() {
+      try {
+        if (IS_ENCRYPTED) {
+          await showPasswordModal();
+        } else {
+          const result = await decodePage();
+          renderPage(result);
+        }
+      } catch (e) {
+        app.innerHTML = '<div class="page-main"><div class="page-container max-md"><p class="error">' + T.error + ': ' + escapeHtml(e.message) + '</p></div></div>';
+      }
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>

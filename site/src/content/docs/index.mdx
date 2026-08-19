@@ -1,0 +1,139 @@
+---
+title: ALTWEB
+description: Signed context capsules for AI agents — markdown compiled into self-contained, verifiable artifacts. Verify before you inject.
+template: splash
+---
+
+import RevealScript from '../../components/RevealScript.astro';
+import Mermaid from '../../components/Mermaid.astro';
+
+<div class="aw-hero aw-reveal" id="_top">
+	<p class="aw-eyebrow">Signed context capsules</p>
+	<h1>Signed context capsules for AI agents.</h1>
+	<p class="aw-sub">
+		The files that steer an AI agent — instructions, personas, skills, memory — are plain text
+		with no provenance. ALTWEB compiles markdown into a self-contained, signed capsule you can
+		hand to anyone, and gives your agent one rule: verify before you inject.
+	</p>
+	<div class="aw-actions">
+		<a class="aw-btn aw-btn--primary" href="/quickstart/">Get started →</a>
+		<a class="aw-btn aw-btn--ghost" href="https://github.com/danielsoimu/altweb">GitHub</a>
+	</div>
+</div>
+
+<div class="aw-section aw-reveal">
+	<p class="aw-eyebrow">01 · The problem</p>
+	<h2>Context has no provenance.</h2>
+	<div class="aw-grid aw-grid--3">
+		<div class="aw-cell">
+			<span class="num">CONTEXT</span>
+			<h3>Plain text steers the agent</h3>
+			<p>Instructions, personas, skills, memory files — they are injected into the model as-is. The agent treats whatever is in the file as ground truth.</p>
+		</div>
+		<div class="aw-cell">
+			<span class="num">WRITE = POISON</span>
+			<h3>Anyone who can write it can poison it</h3>
+			<p>A rogue process, a compromised sync, a bad merge, another tool on the same machine — one silent edit and the agent runs on someone else's instructions.</p>
+		</div>
+		<div class="aw-cell">
+			<span class="num">NO TRACE</span>
+			<h3>Tampering leaves no mark</h3>
+			<p>Plain markdown carries no author and no integrity check. There is nothing to verify, so nothing gets verified — the edit simply wins.</p>
+		</div>
+	</div>
+</div>
+
+<div class="aw-section aw-reveal">
+	<p class="aw-eyebrow">02 · The capsule</p>
+	<h2>Markdown in, sealed artifact out.</h2>
+	<p class="aw-lead">
+		A capsule is your markdown compiled into a single <code>.altweb.html</code> file or URL:
+		content compressed with deflate, optionally encrypted with AES-256-GCM, optionally signed
+		with ECDSA P-256. It opens in any browser, verifies offline, and needs no server.
+	</p>
+	<Mermaid
+		caption="The compile pipeline. Encryption is optional; the signature covers the compressed payload, so verification is pure cryptography — offline, no server."
+		code={`flowchart LR
+	MD["markdown"] --> C["compress<br/>(deflate)"]
+	C --> E["encrypt?<br/>(AES-256-GCM)"]
+	E --> S["sign?<br/>(ECDSA P-256)"]
+	S --> A["self-contained artifact<br/>.altweb.html / URL hash"]`}
+	/>
+	<div class="aw-grid aw-grid--3">
+		<div class="aw-cell">
+			<span class="num">SELF-CONTAINED</span>
+			<h3>The file is the payload</h3>
+			<p>Content lives in the URL hash or in the file itself. No hosting requirement, no backend, nothing to take down.</p>
+		</div>
+		<div class="aw-cell">
+			<span class="num">IDENTITY</span>
+			<h3>A passphrase is a keypair</h3>
+			<p>Your signing identity derives deterministically from a passphrase. The fingerprint identifies the signer; only the public half is ever stored.</p>
+		</div>
+		<div class="aw-cell">
+			<span class="num">OFFLINE</span>
+			<h3>Verification needs nobody</h3>
+			<p>The signature travels inside the capsule. Anyone can check who signed it and that not one byte changed — with no server involved.</p>
+		</div>
+	</div>
+</div>
+
+<div class="aw-section aw-reveal">
+	<p class="aw-eyebrow">03 · Verify before inject</p>
+	<h2>The loader is the gatekeeper.</h2>
+	<p class="aw-lead">
+		The <code>altweb-context</code> MCP server sits between your capsules and your agent. It
+		returns content only when the capsule is signed, the signature verifies, and the signer's
+		public key is in your local trust file. Everything else is refused, at load time, with an
+		explicit reason — and refusal is the default: an empty trust file rejects everything,
+		signed or not.
+	</p>
+	<div class="aw-grid aw-grid--2">
+		<div class="aw-cell">
+			<span class="num">LOADED</span>
+			<h3>Signed + verified + trusted</h3>
+			<p>The markdown is returned to the agent, prefixed with the verified signer's name and fingerprint — provenance travels with the content.</p>
+		</div>
+		<div class="aw-cell">
+			<span class="num">REFUSED</span>
+			<h3>Everything else, with a reason</h3>
+			<p><code>UNSIGNED</code> — no signature at all. <code>INVALID_SIGNATURE</code> — bytes changed since signing. <code>UNTRUSTED_KEY</code> — valid signature, but the fingerprint is not in your trust file.</p>
+		</div>
+	</div>
+</div>
+
+<div class="aw-section aw-reveal">
+	<p class="aw-eyebrow">04 · Write and ship</p>
+	<h2>Two ways to make a capsule.</h2>
+	<div class="aw-grid aw-grid--2">
+		<div class="aw-cell">
+			<span class="num">CLI</span>
+			<h3>altweb compile --sign</h3>
+			<p>One command from markdown to signed artifact: <code>compile</code>, <code>decode</code>, <code>verify</code>, <code>keygen</code>. Scriptable end to end — exit codes make verification a build step.</p>
+			<p class="aw-cell-cta"><a href="/cli/">CLI reference →</a></p>
+		</div>
+		<div class="aw-cell">
+			<span class="num">EDITOR</span>
+			<h3>Write visually, export sealed</h3>
+			<p>A Notion-style editor built on Novel: write in a WYSIWYG surface, export a capsule as a downloadable file, a URL, or a QR code.</p>
+			<p class="aw-cell-cta"><a href="https://editor.altweb.software">Open the editor →</a></p>
+		</div>
+	</div>
+</div>
+
+<div class="aw-section aw-reveal">
+	<p class="aw-eyebrow">05 · Get started</p>
+	<h2>Five minutes to a verified capsule.</h2>
+	<p class="aw-lead">
+		Generate an identity, sign a file, verify it, and wire the loader into your agent — the
+		quickstart walks the whole loop. Or inspect a real signed capsule we publish here, or make
+		your own right now in the visual editor.
+	</p>
+	<div class="aw-actions">
+		<a class="aw-btn aw-btn--primary" href="/quickstart/">Read the quickstart →</a>
+		<a class="aw-btn aw-btn--ghost" href="/demo/">See the demo capsule</a>
+		<a class="aw-btn aw-btn--ghost" href="https://editor.altweb.software">Open the editor →</a>
+	</div>
+</div>
+
+<RevealScript />

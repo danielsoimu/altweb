@@ -1,0 +1,23 @@
+{
+  "name": "@altweb/mcp",
+  "version": "1.0.0",
+  "description": "altweb-context: MCP server that loads ALTWEB signed context capsules into AI agents — verify first, inject only trusted content",
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "bin": {
+    "altweb-context": "./dist/altweb-context.mjs"
+  },
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/altweb-context.mjs --external:jsdom --banner:js='#!/usr/bin/env node'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@altweb/core": "*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "jsdom": "^28.1.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

@@ -1,0 +1,131 @@
+---
+/*
+ * Site footer: brand + cross-links (editor, GitHub), reference, and the
+ * license/legal line. Replaces Starlight's default footer.
+ */
+---
+
+<footer class="aw-footer">
+	<div class="aw-footer-top">
+		<div class="aw-footer-brand">
+			<span class="aw-footer-mark">
+				<img src="/favicon.svg" alt="" width="24" height="24" />
+				<span>ALTWEB</span>
+			</span>
+			<p class="aw-footer-tagline">Signed context capsules for AI agents. Verify before you inject.</p>
+			<p class="aw-footer-madewith">Made with <span class="aw-heart">♥</span> by Daniel &amp; Claude</p>
+		</div>
+
+		<nav class="aw-footer-cols" aria-label="Footer">
+			<div class="aw-footer-col">
+				<h2>Product</h2>
+				<a href="/quickstart/">Quickstart</a>
+				<a href="/editor/">Editor</a>
+				<a href="/demo/">Live demo</a>
+			</div>
+			<div class="aw-footer-col">
+				<h2>Reference</h2>
+				<a href="/cli/">CLI</a>
+				<a href="/mcp-loader/">MCP loader</a>
+				<a href="/security-model/">Security model</a>
+			</div>
+			<div class="aw-footer-col">
+				<h2>Project</h2>
+				<a href="/faq/">FAQ</a>
+				<a href="/credits/">Credits</a>
+				<a href="https://github.com/danielsoimu/altweb" rel="noopener">GitHub</a>
+			</div>
+		</nav>
+	</div>
+
+	<p class="aw-footer-legal">
+		© 2026 Daniel C. ȘOIMU · Dual-licensed <a href="https://github.com/danielsoimu/altweb/blob/main/LICENSE" rel="noopener">AGPL-3.0-or-later</a> + <a href="/faq/#how-is-altweb-licensed">commercial</a> · <a href="mailto:daniel@soimu.ro">daniel@soimu.ro</a>
+	</p>
+</footer>
+
+<style>
+	.aw-footer {
+		border-top: 1px solid var(--sl-color-hairline);
+		margin-top: 4rem;
+		padding: 2.5rem 0 1rem;
+		font-size: 0.875rem;
+	}
+	.aw-footer-top {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2.5rem 3rem;
+		justify-content: space-between;
+	}
+	.aw-footer-brand {
+		max-width: 22rem;
+	}
+	.aw-footer-mark {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-weight: 800;
+		letter-spacing: 0.18em;
+		color: var(--sl-color-white);
+	}
+	.aw-footer-mark img {
+		border-radius: 5px;
+	}
+	.aw-footer-tagline {
+		margin: 0.75rem 0 0;
+		color: var(--sl-color-gray-3);
+		line-height: 1.5;
+	}
+	.aw-footer-cols {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2.5rem;
+	}
+	.aw-footer-col {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.aw-footer-col h2 {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--sl-color-gray-3);
+		margin: 0 0 0.25rem;
+		border: 0;
+		padding: 0;
+		font-weight: 600;
+	}
+	.aw-footer-col a {
+		color: var(--sl-color-gray-2);
+		text-decoration: none;
+	}
+	.aw-footer-col a:hover {
+		color: var(--sl-color-white);
+	}
+	.aw-footer-legal {
+		margin: 2.5rem 0 0;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--sl-color-hairline);
+		text-align: center;
+		font-size: 0.78rem;
+		line-height: 1.6;
+		color: var(--sl-color-gray-3);
+	}
+	.aw-footer-legal a {
+		color: var(--sl-color-gray-2);
+		text-decoration: none;
+	}
+	.aw-footer-legal a:hover {
+		color: var(--sl-color-white);
+		text-decoration: underline;
+	}
+	.aw-footer-madewith {
+		margin: 0.9rem 0 0;
+		font-size: 0.82rem;
+		letter-spacing: 0.01em;
+		color: var(--sl-color-gray-3);
+	}
+	.aw-heart {
+		color: #e0245e;
+	}
+</style>

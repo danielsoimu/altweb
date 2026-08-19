@@ -1,0 +1,83 @@
+---
+title: Live demo capsule
+description: A real signed capsule published on this site — download it, verify it locally, and load it through the MCP server.
+---
+
+This site publishes a **real signed capsule** — a small agent persona,
+compiled and signed with the public **ALTWEB demo key**. Nothing about it is
+mocked: the file below is the artifact exactly as the CLI produced it, and
+every step on this page can be reproduced on your machine.
+
+<p>
+	<a class="aw-btn aw-btn--primary" href="/demo/demo.altweb.html" download>Download demo.altweb.html →</a>
+	&nbsp;
+	<a class="aw-btn aw-btn--ghost" href="/demo/demo.altweb.html" target="_blank" rel="noopener">Open it in the browser</a>
+</p>
+
+:::tip[Make your own]
+This capsule was written and signed in the **visual editor** — no install, all
+in the browser. [Open the editor →](https://editor.altweb.software) to create
+and sign your own, then verify it exactly like the steps below.
+:::
+
+| | |
+|---|---|
+| Artifact | [`/demo/demo.altweb.html`](/demo/demo.altweb.html) |
+| Signer | ALTWEB demo key |
+| Fingerprint | `aa:7f:6d:ca:a2:48:08:db` |
+| Content | A minimal "release engineer" agent persona in markdown |
+
+## Verify it locally (CLI)
+
+Download the artifact, then:
+
+```bash
+curl -fsSL https://altweb.software/demo/demo.altweb.html -o demo.altweb.html
+node packages/cli/dist/altweb.mjs verify demo.altweb.html
+```
+
+Expected: the signature reports **VALID** with fingerprint
+`aa:7f:6d:ca:a2:48:08:db`, and the exit code is `0`. Now open the file, change
+any single character of the embedded hash, and run `verify` again — it fails.
+That is the entire pitch in one experiment.
+
+To read the content:
+
+```bash
+node packages/cli/dist/altweb.mjs decode demo.altweb.html
+```
+
+## Load it through the MCP server
+
+1. Trust the demo fingerprint by adding it to `~/.altweb/trusted-keys.json`:
+
+   ```json
+   {
+     "keys": [
+       {
+         "name": "ALTWEB demo key",
+         "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEd2n93TgVGERaW8lTFAEnbjLOUJktbp9ILJnA5XWZIG9qw-RcG19zdm7qFuKCW2Bn7dxvkzPVlI6M07kMmkeQsg",
+         "fingerprint": "aa:7f:6d:ca:a2:48:08:db"
+       }
+     ]
+   }
+   ```
+
+2. With `altweb-context` registered in your MCP client
+   ([setup](/mcp-loader/#setup-claude-code-example)), ask your agent to call
+   `load_capsule` with the file path (or this page's artifact URL) as
+   `source`. The markdown is returned prefixed with the verified signer line.
+
+3. Remove the entry from the trust file and call `load_capsule` again:
+   `REFUSED (UNTRUSTED_KEY)` — the signature is still valid, but the policy
+   no longer allows the signer. Verification and trust are separate on
+   purpose.
+
+## The honest caveat
+
+The demo key exists so this page can publish a working example. Its
+passphrase is public (`altweb-demo-capsule`) — which means **anyone** can
+sign capsules as the demo key. Trust it in your file only while experimenting,
+then remove it. A fingerprint whose passphrase is public proves integrity,
+but identifies nobody — which is exactly why your real trust file should
+contain only fingerprints whose passphrases are actually secret.

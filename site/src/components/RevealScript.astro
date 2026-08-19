@@ -1,0 +1,24 @@
+---
+/* Scroll-reveal for the landing: fade + slight rise as sections enter the viewport.
+   Adds a `js` flag so no-JS visitors see everything immediately; honors reduced motion. */
+---
+<script>
+	document.documentElement.classList.add('js');
+	const els = document.querySelectorAll('.aw-reveal');
+	if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+		const io = new IntersectionObserver(
+			(entries) => {
+				for (const e of entries) {
+					if (e.isIntersecting) {
+						e.target.classList.add('is-visible');
+						io.unobserve(e.target);
+					}
+				}
+			},
+			{ threshold: 0.12 }
+		);
+		els.forEach((el) => io.observe(el));
+	} else {
+		els.forEach((el) => el.classList.add('is-visible'));
+	}
+</script>

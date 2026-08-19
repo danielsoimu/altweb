@@ -1,0 +1,28 @@
+---
+/*
+ * Override of Starlight's PageTitle. On the splash landing the designed hero
+ * IS the title, so we render nothing at all — the redundant page-title <h1>
+ * is removed from the DOM (not hidden). The #_top anchor lives on the hero
+ * instead (see index.mdx). Content pages keep the normal visible title.
+ */
+const { entry } = Astro.locals.starlightRoute;
+const isSplash = entry.data.template === 'splash';
+---
+
+{
+	!isSplash && (
+		<h1 id="_top">{entry.data.title}</h1>
+	)
+}
+
+<style>
+	@layer starlight.core {
+		h1 {
+			margin-top: 1rem;
+			font-size: var(--sl-text-h1);
+			line-height: var(--sl-line-height-headings);
+			font-weight: 600;
+			color: var(--sl-color-white);
+		}
+	}
+</style>

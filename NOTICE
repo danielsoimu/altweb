@@ -1,0 +1,15 @@
+ALTWEB — signed context capsules
+Copyright (c) 2026 Daniel C. ȘOIMU.
+
+Dual-licensed: GNU Affero General Public License v3.0-or-later (see LICENSE),
+or a commercial license by agreement (see COMMERCIAL.md).
+
+This project builds on and gratefully credits the following open-source work:
+
+- Novel (https://github.com/steven-tey/novel) — Apache License 2.0
+  The editor application is built on Novel's Notion-style WYSIWYG editor.
+- Tiptap (https://github.com/ueberdosis/tiptap) — MIT License
+  Rich-text editing framework underlying the editor.
+- DOMPurify, marked, pako, zod, @noble/curves — see each package's license.
+
+All trademarks and project names belong to their respective owners.

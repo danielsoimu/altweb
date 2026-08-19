@@ -1,0 +1,11 @@
+---
+/*
+ * Override of Starlight's Search. Hidden on the splash landing (a search box
+ * on the marketing page is noise); the default search stays on every content
+ * page, where it is useful.
+ */
+import Default from '@astrojs/starlight/components/Search.astro';
+const isSplash = Astro.locals.starlightRoute.entry.data.template === 'splash';
+---
+
+{!isSplash && <Default />}

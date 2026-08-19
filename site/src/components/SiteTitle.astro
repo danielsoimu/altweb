@@ -1,0 +1,37 @@
+---
+/*
+ * SiteTitle: the ALTWEB wordmark — the shared AW badge (same mark as the
+ * favicon and the editor) followed by the ALTWEB wordmark. Kept consistent
+ * with the editor header so both surfaces read as one product.
+ */
+const { locale } = Astro.props;
+const home = locale ? `/${locale}/` : '/';
+---
+
+<a href={home} class="aw-sitetitle" aria-label="ALTWEB">
+	<img src="/favicon.svg" alt="" width="26" height="26" class="aw-mark" />
+	<span class="aw-wordmark">ALTWEB</span>
+</a>
+
+<style>
+	.aw-sitetitle {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+		text-decoration: none;
+	}
+	.aw-mark {
+		display: block;
+		height: 1.55rem;
+		width: 1.55rem;
+		border-radius: 6px;
+	}
+	.aw-wordmark {
+		font-weight: 800;
+		letter-spacing: 0.18em;
+		font-size: 1.02rem;
+		color: var(--sl-color-white);
+		/* trim the trailing letter-spacing so the mark+text stay optically centered */
+		margin-inline-end: -0.18em;
+	}
+</style>

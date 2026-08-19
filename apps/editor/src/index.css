@@ -1,0 +1,404 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: .dark on <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Base: system font stack, monochrome light-first palette             */
+/* ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+body {
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ------------------------------------------------------------------ */
+/* Editor prose (.aw-prose is the ProseMirror root element)            */
+/* ------------------------------------------------------------------ */
+
+.aw-prose {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: #1a1a1a;
+  caret-color: #1a1a1a;
+}
+
+.dark .aw-prose {
+  color: #ededed;
+  caret-color: #ededed;
+}
+
+.aw-prose > * + * {
+  margin-top: 0.75rem;
+}
+
+.aw-prose h1,
+.aw-prose h2,
+.aw-prose h3,
+.aw-prose h4,
+.aw-prose h5,
+.aw-prose h6 {
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.aw-prose h1 {
+  font-size: 2rem;
+  margin-top: 1.75rem;
+}
+
+.aw-prose h2 {
+  font-size: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.aw-prose h3 {
+  font-size: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.aw-prose h4,
+.aw-prose h5,
+.aw-prose h6 {
+  font-size: 1.0625rem;
+  margin-top: 1rem;
+}
+
+.aw-prose a,
+.aw-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #a3a3a3;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: text-decoration-color 120ms ease;
+}
+
+.aw-prose a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Lists (preflight resets list styles; restore them) */
+.aw-bullet-list {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.aw-ordered-list {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+}
+
+.aw-bullet-list li,
+.aw-ordered-list li {
+  margin: 0.25rem 0;
+}
+
+.aw-bullet-list li::marker,
+.aw-ordered-list li::marker {
+  color: #a3a3a3;
+}
+
+.aw-bullet-list p,
+.aw-ordered-list p {
+  margin: 0;
+}
+
+/* Task lists */
+.aw-task-list {
+  list-style: none;
+  padding-left: 0.125rem;
+}
+
+.aw-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0.3rem 0;
+}
+
+.aw-task-item > label {
+  flex-shrink: 0;
+  margin-top: 0.33rem;
+}
+
+.aw-task-item > label input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: #171717;
+}
+
+.dark .aw-task-item > label input[type="checkbox"] {
+  accent-color: #ededed;
+}
+
+.aw-task-item > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aw-task-item[data-checked="true"] > div {
+  color: #a3a3a3;
+  text-decoration: line-through;
+}
+
+.aw-task-item p {
+  margin: 0;
+}
+
+/* Blockquote */
+.aw-blockquote {
+  border-left: 3px solid #d4d4d4;
+  padding-left: 1rem;
+  color: #525252;
+}
+
+.dark .aw-blockquote {
+  border-left-color: #525252;
+  color: #a3a3a3;
+}
+
+/* Code */
+.aw-inline-code {
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.3rem;
+  padding: 0.125rem 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.85em;
+}
+
+.dark .aw-inline-code {
+  background: #1f1f1f;
+  border-color: #333333;
+}
+
+.aw-code-block {
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.5rem;
+  padding: 0.9rem 1.1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.dark .aw-code-block {
+  background: #161616;
+  border-color: #333333;
+}
+
+.aw-code-block code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* Images */
+.aw-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e5e5;
+  margin: 1rem 0;
+}
+
+.dark .aw-image {
+  border-color: #333333;
+}
+
+.aw-image-uploading {
+  opacity: 0.4;
+}
+
+.img-placeholder {
+  position: relative;
+}
+
+/* Horizontal rule */
+.aw-hr {
+  border: none;
+  border-top: 1px solid #e5e5e5;
+  margin: 1.75rem 0;
+}
+
+.dark .aw-hr {
+  border-top-color: #333333;
+}
+
+/* Tables */
+.aw-prose table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1rem 0;
+  overflow: hidden;
+  font-size: 0.9375rem;
+}
+
+.aw-prose th,
+.aw-prose td {
+  border: 1px solid #e5e5e5;
+  padding: 0.45rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+  position: relative;
+}
+
+.dark .aw-prose th,
+.dark .aw-prose td {
+  border-color: #333333;
+}
+
+.aw-prose th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.dark .aw-prose th {
+  background: #161616;
+}
+
+.aw-prose th p,
+.aw-prose td p {
+  margin: 0;
+}
+
+.aw-prose .selectedCell {
+  background: rgba(163, 163, 163, 0.18);
+}
+
+.aw-prose .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 3px;
+  background-color: #737373;
+  pointer-events: none;
+}
+
+/* Text selection + node selection */
+.aw-prose ::selection {
+  background: rgba(163, 163, 163, 0.35);
+}
+
+.aw-prose .ProseMirror-selectednode {
+  outline: 2px solid #a3a3a3;
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Highlight mark (==text==) */
+.aw-prose mark {
+  background: #e5e5e5;
+  color: inherit;
+  border-radius: 0.2rem;
+  padding: 0.06rem 0.15rem;
+}
+
+.dark .aw-prose mark {
+  background: #404040;
+}
+
+/* Placeholder */
+.aw-prose .is-empty::before {
+  content: attr(data-placeholder);
+  color: #b0b0b0;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.dark .aw-prose .is-empty::before {
+  color: #555555;
+}
+
+/* Gap cursor (between block nodes) */
+.aw-prose .ProseMirror-gapcursor {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+}
+
+.aw-prose .ProseMirror-gapcursor::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  border-top: 1px solid currentColor;
+  animation: aw-gapcursor-blink 1.1s steps(2, start) infinite;
+}
+
+.aw-prose.ProseMirror-focused .ProseMirror-gapcursor {
+  display: block;
+}
+
+@keyframes aw-gapcursor-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Global drag handle (Notion-style, inline SVG — no network)          */
+/* ------------------------------------------------------------------ */
+
+.drag-handle {
+  position: fixed;
+  z-index: 50;
+  width: 1.15rem;
+  height: 1.4rem;
+  cursor: grab;
+  border-radius: 0.25rem;
+  opacity: 1;
+  transition: opacity ease-in 0.2s, background-color 120ms ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23a3a3a3'%3E%3Ccircle cx='5.5' cy='3.5' r='1.4'/%3E%3Ccircle cx='5.5' cy='8' r='1.4'/%3E%3Ccircle cx='5.5' cy='12.5' r='1.4'/%3E%3Ccircle cx='10.5' cy='3.5' r='1.4'/%3E%3Ccircle cx='10.5' cy='8' r='1.4'/%3E%3Ccircle cx='10.5' cy='12.5' r='1.4'/%3E%3C/svg%3E");
+  background-size: 0.85rem 0.85rem;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.drag-handle:hover {
+  background-color: rgba(163, 163, 163, 0.18);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media screen and (max-width: 640px) {
+  .drag-handle {
+    display: none;
+    pointer-events: none;
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@altweb/cli",
+  "version": "1.0.0",
+  "description": "ALTWEB command line: compile markdown to signed artifacts, decode, verify",
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "bin": {
+    "altweb": "./dist/altweb.mjs"
+  },
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/altweb.mjs --external:jsdom --banner:js='#!/usr/bin/env node'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@altweb/core": "*",
+    "jsdom": "^28.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

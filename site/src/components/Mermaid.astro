@@ -1,0 +1,122 @@
+---
+/*
+ * Mermaid diagram, rendered client-side from a locally bundled mermaid package.
+ * No CDN, no external request. The source is stored in a hidden <pre> and turned
+ * into inline SVG on load; it re-renders when the Starlight theme toggles.
+ */
+interface Props {
+	code: string;
+	caption?: string;
+	variant?: 'square';
+}
+const { code, caption, variant } = Astro.props;
+const figClass = variant === 'square' ? 'aw-diagram aw-diagram--square' : 'aw-diagram';
+---
+
+<figure class={figClass}>
+	<pre class="aw-mermaid-src" hidden set:text={code}></pre>
+	<div class="aw-mermaid-out" aria-hidden="false"></div>
+	{caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+	import mermaid from 'mermaid';
+
+	function currentTheme(): 'dark' | 'base' {
+		const t = document.documentElement.dataset.theme;
+		return t === 'light' ? 'base' : 'dark';
+	}
+
+	let counter = 0;
+
+	async function renderAll() {
+		const theme = currentTheme();
+		const dark = theme === 'dark';
+		// Brand palette: #ffffff / #1a1a1a — strictly monochrome.
+		const paper = dark ? '#1a1a1a' : '#ffffff';
+		const wash = dark ? '#242424' : '#f2f2f2';
+		const ink = dark ? '#ffffff' : '#1a1a1a';
+		const inkSoft = dark ? '#a3a3a3' : '#4b4b4b';
+		const line = dark ? '#3a3a3a' : '#d9d9d9';
+		mermaid.initialize({
+			startOnLoad: false,
+			// Diagram sources are static and authored in-repo (never user input), so
+			// 'loose' is safe and lets labels use <br/> line breaks.
+			securityLevel: 'loose',
+			theme: 'base',
+			fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+			// Tighter sequence spacing: a smaller intrinsic width means the text ends
+			// up relatively larger once the SVG is scaled to the container width.
+			sequence: {
+				actorMargin: 28,
+				width: 120,
+				messageMargin: 28,
+				boxMargin: 8,
+				noteMargin: 8,
+			},
+			themeVariables: {
+				background: paper,
+				primaryColor: wash,
+				primaryTextColor: ink,
+				primaryBorderColor: line,
+				secondaryColor: paper,
+				tertiaryColor: wash,
+				lineColor: inkSoft,
+				textColor: ink,
+				// sequence diagrams
+				actorBkg: wash,
+				actorBorder: line,
+				actorTextColor: ink,
+				actorLineColor: line,
+				signalColor: inkSoft,
+				signalTextColor: ink,
+				labelBoxBkgColor: paper,
+				labelBoxBorderColor: ink,
+				labelTextColor: ink,
+				noteBkgColor: wash,
+				noteTextColor: ink,
+				noteBorderColor: inkSoft,
+				// flowchart edges/labels
+				edgeLabelBackground: paper,
+				clusterBkg: dark ? '#202020' : '#fafafa',
+				clusterBorder: line,
+			},
+		});
+
+		const figures = document.querySelectorAll<HTMLElement>('.aw-diagram');
+		for (const fig of figures) {
+			const src = fig.querySelector<HTMLElement>('.aw-mermaid-src')?.textContent ?? '';
+			const out = fig.querySelector<HTMLElement>('.aw-mermaid-out');
+			if (!src.trim() || !out) continue;
+			const id = `aw-mmd-${counter++}`;
+			try {
+				const { svg } = await mermaid.render(id, src);
+				out.innerHTML = svg;
+			} catch (err) {
+				out.innerHTML =
+					'<pre style="color:var(--aw-stop)">diagram render error</pre>';
+				// eslint-disable-next-line no-console
+				console.error('mermaid render failed', err);
+			}
+		}
+	}
+
+	// Module scripts are deferred, so the DOM is parsed by now — render immediately.
+	// (Starlight has no ClientRouter by default, so astro:page-load may never fire;
+	// we still listen to it in case view transitions get enabled later.)
+	void renderAll();
+	document.addEventListener('astro:page-load', () => {
+		void renderAll();
+	});
+
+	// Re-render on theme toggle.
+	const observer = new MutationObserver((mutations) => {
+		for (const m of mutations) {
+			if (m.attributeName === 'data-theme') {
+				void renderAll();
+				break;
+			}
+		}
+	});
+	observer.observe(document.documentElement, { attributes: true });
+</script>

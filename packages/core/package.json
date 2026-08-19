@@ -1,0 +1,29 @@
+{
+  "name": "@altweb/core",
+  "version": "1.0.0",
+  "description": "ALTWEB headless engine: content model, codec (compress/encrypt/sign/encode), markdown, templates",
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./node-dom": "./src/sanitize/node-dom.ts"
+  },
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@noble/curves": "^2.0.1",
+    "dompurify": "^3.3.1",
+    "marked": "^17.0.3",
+    "pako": "2.1.0",
+    "zod": "^4.3.6"
+  },
+  "optionalDependencies": {
+    "jsdom": "^28.1.0"
+  }
+}

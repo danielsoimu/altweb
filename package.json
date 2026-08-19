@@ -1,0 +1,41 @@
+{
+  "name": "altweb",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Signed context capsules: markdown compiled into self-contained, verifiable, optionally encrypted artifacts — for humans and AI agents.",
+  "license": "AGPL-3.0-or-later",
+  "author": "Daniel C. Șoimu",
+  "homepage": "https://altweb.software",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielsoimu/altweb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/danielsoimu/altweb/issues"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test:run -w @altweb/core",
+    "test:run": "npm run test:run -w @altweb/core",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "overrides": {
+    "@modelcontextprotocol/sdk": {
+      "zod": "^3.25.0"
+    }
+  },
+  "devDependencies": {
+    "@types/jsdom": "^30.0.0",
+    "@types/node": "^24.10.1",
+    "@types/pako": "^2.0.4",
+    "esbuild": "^0.25.0",
+    "jsdom": "^28.1.0",
+    "typescript": "~5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
