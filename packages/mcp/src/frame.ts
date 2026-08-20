@@ -39,9 +39,11 @@ export function frameCapsuleText(
   }
   const begin = `<<<ALTWEB-CONTENT-BEGIN ${nonce}>>>`;
   const end = `<<<ALTWEB-CONTENT-END ${nonce}>>>`;
-  // Newlines in a signer name would let a trust-file entry spoof header lines.
-  // The trust file is operator-controlled, but flattening is free.
-  const signer = provenance.signerName.replace(/\s+/g, ' ').trim();
+  // A trust-file name is operator-controlled, but harden it anyway: flatten
+  // whitespace (no injected header lines) and strip double quotes, then wrap
+  // the whole value in quotes. Quoting makes an embedded "signer:"/
+  // "fingerprint:" unambiguously part of the name, not a second header line.
+  const signer = `"${provenance.signerName.replace(/[\s"]+/g, ' ').trim()}"`;
 
   return (
     `[ALTWEB capsule verified]\n` +
