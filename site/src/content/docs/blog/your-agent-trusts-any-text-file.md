@@ -21,7 +21,7 @@ One silent edit and the agent is running on someone else's instructions. Nothing
 
 It already happened at scale, and the research caught up with it the same year.
 
-In early 2026, a [coordinated campaign](https://www.antiy.net/p/clawhavoc-analysis-of-large-scale-poisoning-campaign-targeting-the-openclaw-skill-market-for-ai-agents/) poisoned 1,184 published agent skills on a public registry — malware planted where agents go looking for capability. A [February audit of 3,984 skills](https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/) found that more than a third carried at least one security flaw, with 76 shipping confirmed malicious payloads. Some of those payloads wrote straight into the agent's own memory and persona files, so the compromise survived restarts. And by mid-2026, a Cloud Security Alliance review found the public skill scanners [bypassed across the board](https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-agent-skill-scanner-bypass-20260610-csa/). On August 17, OWASP published the [Agentic Skills Top 10](https://owasp.org/www-project-agentic-skills-top-10/) — a whole framework for a threat class that barely had a name eighteen months ago.
+In early 2026, a [coordinated campaign](https://www.antiy.net/p/clawhavoc-analysis-of-large-scale-poisoning-campaign-targeting-the-openclaw-skill-market-for-ai-agents/) poisoned 1,184 published agent skills on a public registry — malware planted where agents go looking for capability. A [February audit of 3,984 skills](https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/) found that more than a third carried at least one security flaw, with 76 shipping confirmed malicious payloads. Some of those payloads wrote straight into the agent's own memory and persona files, so the compromise survived restarts. And the scanners meant to catch this don't: in June, [Trail of Bits](https://blog.trailofbits.com/2026/06/03/the-sorry-state-of-skill-distribution/) bypassed the ClawHub, Cisco, and Vercel skill detectors — three of the four techniques took under an hour to build. On August 17, OWASP published the [Agentic Skills Top 10](https://owasp.org/www-project-agentic-skills-top-10/) — a whole framework for a threat class that barely had a name eighteen months ago.
 
 The academic work names the mechanism precisely.
 
@@ -77,13 +77,11 @@ There's a subtle trap even here, and it's worth showing because it's the kind of
 
 ## Isn't this just Sigstore?
 
-Fair question, and the honest answer is that Sigstore is excellent and you should probably use it — if it fits.
+Fair question — and Sigstore is genuinely excellent, so let me be precise about where it fits and where it doesn't.
 
-Keyless signing binds your identity to an OIDC provider (GitHub, Google) and records every signature in a public transparency log. That buys you two things ALTWEB doesn't have: real revocation via short-lived certificates, and a public record anyone can audit. If you sign in CI and your team lives on GitHub, that's the better tool.
+Sigstore's keyless signing binds your identity to an OIDC provider (GitHub, Google) and records every signature in a public transparency log. Both are strengths right up until they're constraints — and ALTWEB is built for when they're constraints: air-gapped and classified environments where verification cannot phone home, organizations that won't federate identity to a third party, and content that has to stay confidential — signing systems attest, they don't encrypt. A capsule verifies on a laptop with the network cable pulled, and its contents can be encrypted at rest inside the same file.
 
-ALTWEB is for the cases where those requirements are the problem rather than the solution: air-gapped and classified environments where verification cannot phone home, organizations that won't federate identity to a third party, and content that has to stay confidential — signing systems attest, they don't encrypt. A capsule verifies on a laptop with the network cable pulled, and its contents can be encrypted at rest inside the same file.
-
-Different trade, not a better one. Pick the one whose costs you can live with.
+Where Sigstore wins, it wins for real: revocation via short-lived certificates, and a public transparency log anyone can audit — neither of which ALTWEB has. If you sign in CI and your team lives on GitHub, use Sigstore. Different trade, not a better one; pick the one whose costs you can live with.
 
 ## What a signature does not prove
 
