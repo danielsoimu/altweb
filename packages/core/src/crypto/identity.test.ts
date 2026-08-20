@@ -1,6 +1,36 @@
 import { describe, it, expect } from 'vitest';
-import { deriveIdentityFromPassphrase, validateIdentityPassphrase } from './identity';
+import {
+  deriveIdentityFromPassphrase,
+  deriveLegacyIdentityFromPassphrase,
+  validateIdentityPassphrase,
+} from './identity';
 import { sign, verify } from './signing';
+
+describe('Identity - derivation scheme versions', () => {
+  it('v1 legacy continuity: known passphrase still derives the recorded fingerprint', async () => {
+    // Vector recorded with the v1 (PBKDF2) implementation before the v2
+    // switch — this is what protects pre-v2 identities from silent breakage.
+    const identity = await deriveLegacyIdentityFromPassphrase(
+      'v1-continuity-vector-fixed-phrase'
+    );
+    expect(identity.fingerprint).toBe('ce:4b:a6:cf:5c:e3:0b:db');
+  });
+
+  it('v2 and v1 derive DIFFERENT identities from the same passphrase', async () => {
+    const passphrase = 'v1-continuity-vector-fixed-phrase';
+    const v2 = await deriveIdentityFromPassphrase(passphrase);
+    const v1 = await deriveLegacyIdentityFromPassphrase(passphrase);
+    expect(v2.fingerprint).not.toBe(v1.fingerprint);
+    expect(v2.publicKeyBase64).not.toBe(v1.publicKeyBase64);
+  });
+
+  it('v2 signatures verify with the standard verify()', async () => {
+    const identity = await deriveIdentityFromPassphrase('argon2id-scheme-check-phrase');
+    const data = new TextEncoder().encode('v2 signed payload');
+    const signature = await sign(data, identity.keyPair.privateKey);
+    expect(await verify(data, signature, identity.publicKeyBase64)).toBe(true);
+  });
+});
 
 describe('Identity - Deterministic Key Derivation', () => {
   it('derives the same keypair from the same passphrase', async () => {

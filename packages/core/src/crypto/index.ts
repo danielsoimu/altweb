@@ -10,6 +10,7 @@ export {
 } from './signing';
 export {
   deriveIdentityFromPassphrase,
+  deriveLegacyIdentityFromPassphrase,
   validateIdentityPassphrase,
   type DerivedIdentity,
   type PassphraseFeedbackKey,

@@ -56,7 +56,7 @@ password is supplied.
 
 ## Identity: strengths and consequences
 
-The deterministic passphrase identity (PBKDF2, 600,000 iterations, SHA-256,
+The deterministic passphrase identity (Argon2id, 64 MiB memory, 3 passes,
 into a P-256 scalar) has clean consequences — read them both ways:
 
 - **No key files to lose.** The private key never touches disk and is
@@ -66,6 +66,13 @@ into a P-256 scalar) has clean consequences — read them both ways:
   there is no revocation server to call. Treat it like a root credential,
   and pick a long one — the derivation is deliberately slow, but a weak
   passphrase is still a weak identity.
+- **The salt is fixed — a deliberate trade.** Determinism ("nothing stored,
+  reproducible anywhere") requires it. What a fixed salt would normally buy
+  an attacker — one precomputed dictionary amortized over every user — is
+  what Argon2id's memory-hardness takes away: each guess costs 64 MiB, so
+  mass precomputation on GPUs stops paying. A per-user salt was considered
+  and rejected: it would mean remembering a second exact input for a
+  marginal gain over memory-hardness plus the enforced passphrase floor.
 - **Rotation is manual.** Changing identity means changing the passphrase,
   which changes the fingerprint — and everyone who trusts you must update
   their trust files.

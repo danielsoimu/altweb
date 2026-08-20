@@ -1,14 +1,34 @@
 /**
  * Deterministic Identity Management
- * Derives ECDSA keypairs from passphrases for persistent identity
+ * Derives ECDSA keypairs from passphrases for persistent identity.
+ *
+ * v2 (current): Argon2id. The salt stays fixed on purpose — the product
+ * promise is "a passphrase is a keypair": one thing to remember, nothing
+ * stored, reproducible anywhere. What a fixed salt gives an attacker is a
+ * precompute-once dictionary that amortizes across every user; Argon2id
+ * removes the economics of that dictionary instead of the salt: each guess
+ * costs 64 MiB of memory, so GPU/ASIC mass production stops paying. A
+ * per-user salt (identifier) was considered and rejected — it would double
+ * what a user must remember exactly, for a marginal gain over memory-hardness
+ * plus the enforced passphrase floor (see validateIdentityPassphrase).
+ *
+ * v1 (legacy): PBKDF2-SHA256, 600k iterations, fixed salt. Kept only so
+ * pre-v2 identities can still be re-derived; new derivations are always v2.
  */
 
 import { p256 } from '@noble/curves/nist.js';
+import { argon2id } from '@noble/hashes/argon2.js';
 import { base64urlEncode } from './encoding';
 
-// Fixed salt for determinism - all ALTWEB users derive keys the same way
-const IDENTITY_SALT = new TextEncoder().encode('ALTWEB-IDENTITY-v1');
+const IDENTITY_SALT_V1 = new TextEncoder().encode('ALTWEB-IDENTITY-v1');
 const PBKDF2_ITERATIONS = 600000;
+
+const IDENTITY_SALT_V2 = new TextEncoder().encode('ALTWEB-IDENTITY-v2');
+// 64 MiB, 3 passes, 1 lane — above the OWASP floor, sized for a long-term
+// signing key. ~0.5s in Node, ~1s in a browser: fine for a rare operation.
+const ARGON2_MEM_KIB = 65536;
+const ARGON2_PASSES = 3;
+const ARGON2_LANES = 1;
 
 /**
  * Represents a derived identity with keypair and fingerprint
@@ -23,7 +43,7 @@ export interface DerivedIdentity {
 }
 
 /**
- * Derives a deterministic ECDSA P-256 keypair from a passphrase.
+ * Derives a deterministic ECDSA P-256 keypair from a passphrase (v2, Argon2id).
  * Same passphrase always produces the same keypair.
  *
  * @param passphrase - Secret phrase (should be strong, like a password)
@@ -35,33 +55,52 @@ export interface DerivedIdentity {
  * // Publish identity.fingerprint publicly to establish authorship
  */
 export async function deriveIdentityFromPassphrase(passphrase: string): Promise<DerivedIdentity> {
-  // 1. Derive 32-byte seed from passphrase using PBKDF2
-  const passphraseBytes = new TextEncoder().encode(passphrase);
+  // 1. Derive a 32-byte seed with Argon2id (memory-hard; see header comment)
+  const seed = argon2id(new TextEncoder().encode(passphrase), IDENTITY_SALT_V2, {
+    m: ARGON2_MEM_KIB,
+    t: ARGON2_PASSES,
+    p: ARGON2_LANES,
+    dkLen: 32,
+  });
+  return identityFromSeed(seed);
+}
 
+/**
+ * Legacy v1 derivation (PBKDF2-SHA256, 600k iterations, fixed salt).
+ * @deprecated Only for re-deriving identities created before the v2 scheme —
+ * fingerprints differ between v1 and v2 for the same passphrase. New
+ * identities must use deriveIdentityFromPassphrase.
+ */
+export async function deriveLegacyIdentityFromPassphrase(
+  passphrase: string
+): Promise<DerivedIdentity> {
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    passphraseBytes,
+    new TextEncoder().encode(passphrase),
     'PBKDF2',
     false,
     ['deriveBits']
   );
-
   const seedBits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: IDENTITY_SALT,
+      salt: IDENTITY_SALT_V1,
       iterations: PBKDF2_ITERATIONS,
       hash: 'SHA-256',
     },
     keyMaterial,
     256 // 32 bytes
   );
+  return identityFromSeed(new Uint8Array(seedBits));
+}
 
+/** Seed -> validated scalar -> Web Crypto keypair + fingerprint. */
+async function identityFromSeed(seed: Uint8Array): Promise<DerivedIdentity> {
   // ~1 in 2^32 seeds falls outside [1, n-1] for P-256; noble would throw.
   // Deterministic rehash-until-valid (FIPS 186-5 B.4.1 style): valid seeds —
   // virtually all — are used unchanged, so existing identities are unaffected;
   // out-of-range seeds now derive a key instead of crashing.
-  let privateScalar = new Uint8Array(seedBits);
+  let privateScalar = seed;
   while (!p256.utils.isValidSecretKey(privateScalar)) {
     privateScalar = new Uint8Array(
       await crypto.subtle.digest('SHA-256', privateScalar as BufferSource)
@@ -180,10 +219,10 @@ export function validateIdentityPassphrase(passphrase: string): {
     'excellent',
   ];
 
-  // Identity derivation uses a global fixed salt by design (determinism:
-  // same passphrase -> same key, nothing stored). That means the entire
-  // security of an identity IS the passphrase entropy — no per-user salt
-  // slows an offline attacker down. Hence the strict floor here: at least
+  // Identity derivation uses a fixed salt by design (determinism: same
+  // passphrase -> same key, nothing stored). Argon2id makes mass dictionary
+  // precomputation economically hostile, but the passphrase entropy is still
+  // the identity's foundation. Hence the strict floor here: at least
   // 16 characters and score >= 3. Prefer long diceware-style phrases.
   return {
     valid: score >= 3 && length >= 16,

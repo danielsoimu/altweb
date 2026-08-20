@@ -64,9 +64,11 @@ key server, no registry, no network.
 ## Identity and fingerprints
 
 A signing identity is derived deterministically from a passphrase:
-PBKDF2 (600,000 iterations, SHA-256, a fixed protocol salt) stretches the
+Argon2id (64 MiB memory, 3 passes, a fixed protocol salt) stretches the
 passphrase into a P-256 private scalar. The same passphrase always yields the
-same keypair, on any machine — your passphrase *is* your identity.
+same keypair, on any machine — your passphrase *is* your identity. The salt
+is fixed on purpose (nothing stored, reproducible anywhere); Argon2id's
+memory-hardness is what keeps precomputed dictionaries uneconomical despite it.
 
 The **fingerprint** is the SHA-256 of the public key (SPKI bytes), first
 8 bytes, hex with colons — e.g. `ab:12:cd:34:ef:56:78:90`. It is short enough
