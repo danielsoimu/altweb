@@ -89,6 +89,17 @@ codec validates structure with zod. See `site/` docs → Security model for the
 full write-up, including the encrypted-capsule caveat (the signature covers
 the decrypted payload, so verification completes after decryption).
 
+## Roadmap
+
+Near-term, in rough order:
+
+- **npm packages** — `npx altweb verify <source>` without cloning the repo.
+- **Hardware-backed identity (FIDO2 / passkeys)** — an *optional* identity
+  type alongside the passphrase one: the private key lives in a security key
+  or secure enclave, never extractable, signing requires physical presence.
+  The passphrase identity stays the default — "a passphrase is a keypair"
+  — hardware keys add *something you have* for those who want it.
+
 ## Credits
 
 Built on excellent open source: [Novel](https://github.com/steven-tey/novel)
