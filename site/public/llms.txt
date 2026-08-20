@@ -4,7 +4,9 @@
 
 AI agents run on plain-text context — instructions, personas, skills, memory — that carries no provenance: anything able to write those files can silently poison them. ALTWEB compiles markdown into a **capsule** (a single `.altweb.html` file or URL: deflate-compressed, optionally AES-256-GCM encrypted, optionally ECDSA P-256 signed), and puts a **loader** in front of your agent that returns content only when the signature verifies and the signer's key is in your local trust file. Everything else is refused, at load time, with an explicit reason — and refusal is the default.
 
-Everything is offline and self-contained: capsules open in any browser, verify with no server, and need no hosting. Open source (AGPL-3.0-or-later), no telemetry, no third parties.
+Everything is offline and self-contained: capsules open in any browser, verify with no server, and need no hosting. No telemetry, no third parties. Dual-licensed: **AGPL-3.0-or-later** for open source use, or a **commercial license by agreement** (closed-source or hosted-as-a-service) — see COMMERCIAL.md in the repo.
+
+Install (nothing to clone): `npx altweb verify <file|url>` (CLI) · `claude mcp add altweb-context -- npx -y altweb-context` (MCP loader). Both are on npm: [`altweb`](https://www.npmjs.com/package/altweb), [`altweb-context`](https://www.npmjs.com/package/altweb-context). Source code (AGPL): https://github.com/danielsoimu/altweb.
 
 ## Start here
 
@@ -22,9 +24,9 @@ Everything is offline and self-contained: capsules open in any browser, verify w
 - [MCP loader (altweb-context)](https://altweb.software/mcp-loader/): The MCP server that loads capsules into AI agents with verification before injection — and refuses everything else, by default, with an explicit reason.
 - [Editor](https://capsule.altweb.software): A browser WYSIWYG editor for writing capsules visually and exporting them as a file, URL, or QR code.
 
-## Optional
+## More
 
 - [FAQ](https://altweb.software/faq/): Short, honest answers — including the things ALTWEB deliberately does not do.
 - [Credits](https://altweb.software/credits/): The open source projects ALTWEB builds on.
-- [Source code](https://github.com/danielsoimu/altweb): The full repository — core, CLI, MCP server, and editor.
+- [Blog](https://altweb.software/blog/): Human-facing writing on context provenance and the thinking behind ALTWEB.
 - [Full docs, concatenated](https://altweb.software/llms-full.txt): Every documentation page as one plain-text file.
