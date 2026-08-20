@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import starlightBlog from 'starlight-blog';
 
 const SITE = 'https://altweb.software';
 
@@ -59,6 +60,22 @@ export default defineConfig({
 				'Signed context capsules for AI agents: verifiable, optionally encrypted markdown artifacts + an MCP loader that refuses untrusted context.',
 			favicon: '/favicon.svg',
 			customCss: ['./src/styles/altweb.css'],
+			plugins: [
+				starlightBlog({
+					title: 'Blog',
+					// Human-facing writing (the docs are agents-first). Provenance,
+					// context poisoning, and the thinking behind ALTWEB.
+					authors: {
+						daniel: {
+							name: 'Daniel C. Șoimu',
+							title: 'ALTWEB',
+							url: 'https://github.com/danielsoimu',
+						},
+					},
+					postCount: 10,
+					recentPostCount: 5,
+				}),
+			],
 			components: {
 				ThemeProvider: './src/components/ThemeProvider.astro',
 				SiteTitle: './src/components/SiteTitle.astro',
