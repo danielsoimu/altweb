@@ -1,16 +1,12 @@
 # ALTWEB docs site — GitHub Pages deploy.
 #
-# NOTE: this workflow activates when the repository is published to GitHub.
-# Until the repo is pushed (and Pages is set to "GitHub Actions" in Settings),
-# it simply never runs — it is correct and ready, just dormant.
+# NOTE: manual-only. The live site deploys via cPanel (archives built from
+# site/dist), so Pages is not enabled on this repo — running this on push
+# just failed with a red X on every commit touching site/**. Kept as a
+# ready-made alternative: enable Pages in Settings, then trigger by hand.
 name: Deploy site to GitHub Pages
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'site/**'
-      - '.github/workflows/site.yml'
   workflow_dispatch:
 
 permissions:
