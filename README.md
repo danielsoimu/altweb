@@ -32,35 +32,37 @@ agent asks for context ──► altweb-context ──► verify signature + tru
 
 | Package | What it is |
 |---|---|
-| `@altweb/core` | Headless engine: content model, codec, crypto, markdown, sanitize |
-| `@altweb/cli` | `altweb compile / decode / verify / keygen` |
-| `@altweb/mcp` | `altweb-context` — MCP server: `load_capsule`, `verify_capsule`, `list_trusted_keys` |
+| [`altweb`](https://www.npmjs.com/package/altweb) | CLI: `altweb compile / decode / verify / keygen` (`packages/cli`) |
+| [`altweb-context`](https://www.npmjs.com/package/altweb-context) | MCP server: `load_capsule`, `verify_capsule`, `list_trusted_keys` (`packages/mcp`) |
+| `@altweb/core` | Headless engine: content model, codec, crypto, markdown, sanitize (bundled into both; npm release planned) |
 | `@altweb/editor` | Notion-style editor (built on [Novel](https://github.com/steven-tey/novel)) with one-click capsule export |
 | `site/` | Documentation site (Astro + Starlight) |
 
 ## Quickstart
 
-```bash
-npm install
-npm run build
+Both tools are on npm — nothing to clone:
 
+```bash
 # create your signing identity (deterministic from a passphrase; only the
 # public key + fingerprint are stored, in ~/.altweb/identity.json)
-node packages/cli/dist/altweb.mjs keygen --save
+npx altweb keygen --save
 
 # write, compile, sign
 echo "# My agent's operating notes" > notes.md
-node packages/cli/dist/altweb.mjs compile notes.md -o notes.altweb.html --sign
+npx altweb compile notes.md -o notes.altweb.html --sign
 
 # verify anywhere, offline
-node packages/cli/dist/altweb.mjs verify notes.altweb.html
+npx altweb verify notes.altweb.html
 ```
 
 Wire the loader into an MCP client (Claude Code example):
 
 ```bash
-claude mcp add altweb-context -- node "$(pwd)/packages/mcp/dist/altweb-context.mjs"
+claude mcp add altweb-context -- npx -y altweb-context
 ```
+
+(From source: `npm install && npm run build`, then use the bundles under
+`packages/*/dist/`.)
 
 Trust a signer by adding its **full public key** to `~/.altweb/trusted-keys.json`
 (the `UNTRUSTED_KEY` refusal message hands you the ready-made entry; the short
@@ -77,10 +79,11 @@ A valid signature proves **who** authored the capsule and that the bytes are
 policy; keep it short.
 
 **Pick a long passphrase.** Identities derive deterministically from your
-passphrase with a fixed global salt (that is what makes them portable with
-nothing stored) — so the passphrase's entropy is the entire security of the
-identity. Use a 16+ character diceware-style phrase; the tooling enforces a
-minimum strength.
+passphrase via Argon2id with a fixed protocol salt (that is what makes them
+portable with nothing stored). Memory-hardness makes mass dictionary attacks
+economically hostile, but the passphrase's entropy is still the identity's
+foundation. Use a 16+ character diceware-style phrase; the tooling enforces
+a minimum strength.
 
 ## Security
 
@@ -93,7 +96,8 @@ the decrypted payload, so verification completes after decryption).
 
 Near-term, in rough order:
 
-- **npm packages** — `npx altweb verify <source>` without cloning the repo.
+- **`@altweb/core` on npm** — the engine as an installable library, for
+  programmatic use (the CLI and loader already ship it bundled).
 - **Hardware-backed identity (FIDO2 / passkeys)** — an *optional* identity
   type alongside the passphrase one: the private key lives in a security key
   or secure enclave, never extractable, signing requires physical presence.

@@ -8,7 +8,7 @@
   "homepage": "https://altweb.software",
   "repository": {
     "type": "git",
-    "url": "https://github.com/danielsoimu/altweb.git",
+    "url": "git+https://github.com/danielsoimu/altweb.git",
     "directory": "packages/cli"
   },
   "bugs": {
@@ -29,7 +29,7 @@
     "node": ">=20"
   },
   "bin": {
-    "altweb": "./dist/altweb.mjs"
+    "altweb": "dist/altweb.mjs"
   },
   "files": [
     "dist"

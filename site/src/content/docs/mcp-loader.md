@@ -88,9 +88,11 @@ file is your policy — keep it short, and add keys deliberately.
 
 ## Setup (Claude Code example)
 
+The loader is the [`altweb-context`](https://www.npmjs.com/package/altweb-context)
+package on npm:
+
 ```bash
-npm run build -w @altweb/mcp
-claude mcp add altweb-context -- node /path/to/altweb/packages/mcp/dist/altweb-context.mjs
+claude mcp add altweb-context -- npx -y altweb-context
 ```
 
 Or in any MCP client config:
@@ -98,13 +100,13 @@ Or in any MCP client config:
 ```json
 {
   "mcpServers": {
-    "altweb-context": {
-      "command": "node",
-      "args": ["/path/to/altweb/packages/mcp/dist/altweb-context.mjs"]
-    }
+    "altweb-context": { "command": "npx", "args": ["-y", "altweb-context"] }
   }
 }
 ```
+
+(From a source checkout: `npm run build -w altweb-context`, then point `command`
+at `node packages/mcp/dist/altweb-context.mjs`.)
 
 ## Guarantees and limits
 

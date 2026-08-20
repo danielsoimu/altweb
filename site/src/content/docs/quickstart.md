@@ -8,19 +8,15 @@ sign a capsule, verify it, and wire the verified loader into an MCP client.
 
 ## 1. Install
 
-Clone the repository and build the workspaces:
+Nothing to install — both tools are on npm and run straight through `npx`:
 
-```bash
-git clone https://github.com/danielsoimu/altweb.git
-cd altweb
-npm install
-npm run build
-```
+- [`altweb`](https://www.npmjs.com/package/altweb) — the CLI
+- [`altweb-context`](https://www.npmjs.com/package/altweb-context) — the MCP server
 
-This produces the two entry points used below:
-
-- `packages/cli/dist/altweb.mjs` — the `altweb` CLI
-- `packages/mcp/dist/altweb-context.mjs` — the `altweb-context` MCP server
+Prefer a global install? `npm i -g altweb` and drop the `npx` prefix below.
+Working from source instead: `git clone https://github.com/danielsoimu/altweb.git
+&& cd altweb && npm install && npm run build`, then use
+`node packages/cli/dist/altweb.mjs` wherever `npx altweb` appears.
 
 ## 2. Create your signing identity
 
@@ -30,7 +26,7 @@ never written to disk; it is re-derived on every run. Only the public key and
 fingerprint are saved.
 
 ```bash
-node packages/cli/dist/altweb.mjs keygen --save
+npx altweb keygen --save
 ```
 
 The passphrase comes from the `ALTWEB_PASSPHRASE` environment variable or,
@@ -48,7 +44,7 @@ should trust your capsules.
 
 ```bash
 echo "# My agent's operating notes" > notes.md
-node packages/cli/dist/altweb.mjs compile notes.md --sign -o notes.altweb.html
+npx altweb compile notes.md --sign -o notes.altweb.html
 ```
 
 The result is a single self-contained HTML file: content compressed, signed,
@@ -57,7 +53,7 @@ and embedded. It opens in any browser and needs no server.
 ## 4. Verify — anywhere, offline
 
 ```bash
-node packages/cli/dist/altweb.mjs verify notes.altweb.html
+npx altweb verify notes.altweb.html
 ```
 
 The command prints the title, block count, and the signature status with the
@@ -70,7 +66,7 @@ build step or a pre-flight check in a script.
 Register the MCP server (Claude Code example):
 
 ```bash
-claude mcp add altweb-context -- node /path/to/altweb/packages/mcp/dist/altweb-context.mjs
+claude mcp add altweb-context -- npx -y altweb-context
 ```
 
 Then tell the loader which signers you trust. Create

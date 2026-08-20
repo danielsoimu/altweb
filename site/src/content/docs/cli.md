@@ -3,11 +3,13 @@ title: CLI reference
 description: altweb compile, decode, verify, keygen — flags, inputs, outputs, and exit codes.
 ---
 
-The CLI lives at `packages/cli/dist/altweb.mjs` after `npm run build`:
+The CLI is the [`altweb`](https://www.npmjs.com/package/altweb) package on npm:
 
 ```bash
-node packages/cli/dist/altweb.mjs <command> [...]
+npx altweb <command> [...]
 ```
+
+(From a source checkout: `npm run build`, then `node packages/cli/dist/altweb.mjs`.)
 
 Every command that takes an artifact accepts the same inputs: a standalone
 `.altweb.html` file, a raw `.altweb` hash file, a URL with `#hash`, or the
