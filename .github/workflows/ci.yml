@@ -20,7 +20,7 @@ jobs:
         run: npm ci
       - name: Typecheck (all workspaces)
         run: npm run typecheck
-      - name: Test (core + editor)
+      - name: Test (core, mcp, editor)
         run: npm test
       - name: Build (all workspaces)
         run: npm run build
