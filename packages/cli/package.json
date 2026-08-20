@@ -1,21 +1,49 @@
 {
-  "name": "@altweb/cli",
+  "name": "altweb",
   "version": "1.0.0",
-  "description": "ALTWEB command line: compile markdown to signed artifacts, decode, verify",
+  "description": "CLI for ALTWEB signed context capsules: compile markdown into self-contained, verifiable, optionally encrypted artifacts — and verify them offline. Verify before you inject.",
   "type": "module",
   "license": "AGPL-3.0-or-later",
+  "author": "Daniel C. Șoimu",
+  "homepage": "https://altweb.software",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielsoimu/altweb.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/danielsoimu/altweb/issues"
+  },
+  "keywords": [
+    "ai-agents",
+    "context",
+    "capsule",
+    "signing",
+    "ecdsa",
+    "provenance",
+    "prompt-injection",
+    "markdown",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "altweb": "./dist/altweb.mjs"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/altweb.mjs --external:jsdom --banner:js='#!/usr/bin/env node'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@altweb/core": "*",
     "jsdom": "^28.1.0"
   },
   "devDependencies": {
+    "@altweb/core": "*",
     "esbuild": "^0.25.0"
   }
 }

@@ -1,25 +1,53 @@
 {
-  "name": "@altweb/mcp",
+  "name": "altweb-context",
   "version": "1.0.0",
-  "description": "altweb-context: MCP server that loads ALTWEB signed context capsules into AI agents — verify first, inject only trusted content",
+  "description": "MCP server that loads ALTWEB signed context capsules into AI agents — verifies first, refuses unsigned, tampered, or untrusted context by default. Verify before you inject.",
   "type": "module",
   "license": "AGPL-3.0-or-later",
+  "author": "Daniel C. Șoimu",
+  "homepage": "https://altweb.software",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielsoimu/altweb.git",
+    "directory": "packages/mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/danielsoimu/altweb/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "context",
+    "capsule",
+    "signing",
+    "provenance",
+    "prompt-injection",
+    "trust"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "altweb-context": "./dist/altweb-context.mjs"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/altweb-context.mjs --external:jsdom --banner:js='#!/usr/bin/env node'",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@altweb/core": "*",
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "jsdom": "^28.1.0",
-    "zod": "^3.25.0"
+    "jsdom": "^28.1.0"
   },
   "devDependencies": {
-    "esbuild": "^0.25.0"
+    "@altweb/core": "*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "esbuild": "^0.25.0",
+    "zod": "^3.25.0"
   }
 }

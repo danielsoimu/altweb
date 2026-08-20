@@ -19,7 +19,7 @@ time before any content reaches the model.
 
 | Tool | What it does |
 |---|---|
-| `load_capsule` | Verify + return markdown content (refuses unsigned / tampered / untrusted) |
+| `load_capsule` | Verify + return markdown content (refuses unsigned / tampered / untrusted). The verified provenance header is separated from the content by markers embedding a random per-load nonce, so content can never imitate its own chain of custody |
 | `verify_capsule` | Provenance report (signed? verified? trusted? encrypted?) without content |
 | `list_trusted_keys` | Show the signers currently trusted |
 
@@ -54,8 +54,7 @@ full public key), or take `publicKey` from the signer's
 ## Setup (Claude Code example)
 
 ```bash
-npm run build -w @altweb/mcp
-claude mcp add altweb-context -- node /path/to/altweb/packages/mcp/dist/altweb-context.mjs
+claude mcp add altweb-context -- npx -y altweb-context
 ```
 
 Or in any MCP client config:
@@ -63,13 +62,13 @@ Or in any MCP client config:
 ```json
 {
   "mcpServers": {
-    "altweb-context": {
-      "command": "node",
-      "args": ["/path/to/altweb/packages/mcp/dist/altweb-context.mjs"]
-    }
+    "altweb-context": { "command": "npx", "args": ["-y", "altweb-context"] }
   }
 }
 ```
+
+From a source checkout instead: `npm run build -w altweb-context`, then point
+`command` at `node packages/mcp/dist/altweb-context.mjs`.
 
 ## Guarantees and limits
 
