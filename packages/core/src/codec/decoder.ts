@@ -9,7 +9,7 @@
  */
 
 import type { AltPage, PayloadEnvelope, DecodeResult, VisibleMeta } from '../types';
-import { base64urlDecode } from '../crypto/encoding';
+import { base64urlDecode, concatBytes } from '../crypto/encoding';
 import { decrypt } from '../crypto/aes-gcm';
 import { verify, computeFingerprint } from '../crypto/signing';
 import { decompress } from '../compression';
@@ -90,11 +90,14 @@ export async function decodePage(
         throw new DecryptionError('Incorrect password or corrupted data');
       }
 
-      // Verify the signature over the blocks
+      // Verify the signature over the visible meta AND the blocks: partial-mode
+      // capsules sign meta || blocks, so verifying blocks alone would accept a
+      // capsule whose visible title/description/author had been rewritten.
       let verified = false;
       let fingerprint: string | undefined;
       if (envelope.s && envelope.pk) {
-        verified = await verify(blocksCompressed, envelope.s, envelope.pk);
+        const signedBytes = concatBytes(metaCompressed, blocksCompressed);
+        verified = await verify(signedBytes, envelope.s, envelope.pk);
         if (verified) {
           fingerprint = await computeFingerprint(envelope.pk);
         }

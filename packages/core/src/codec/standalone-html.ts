@@ -802,7 +802,10 @@ ${DOMPURIFY_CODE}
 
           // Decrypt blocks
           const blocksCompressed = await decrypt(envelope.e, password);
-          signedBytes = blocksCompressed;
+          // Partial mode signs meta || blocks, so the visible meta is covered too.
+          signedBytes = new Uint8Array(metaCompressed.length + blocksCompressed.length);
+          signedBytes.set(metaCompressed, 0);
+          signedBytes.set(blocksCompressed, metaCompressed.length);
           const blocksBytes = await decompress(blocksCompressed);
           const blocksData = JSON.parse(new TextDecoder().decode(blocksBytes));
 
@@ -844,9 +847,10 @@ ${DOMPURIFY_CODE}
         signed,
         verified,
         signatureInvalid,
-        // In partial encryption the signature covers only the blocks;
-        // the visible meta (title/description/author) is NOT signed.
-        partialSigned: signed && !!envelope.m,
+        // Partial-mode signatures now cover meta || blocks, so the visible
+        // meta (title/description/author) is protected too — no weaker
+        // "meta unsigned" state remains.
+        partialSigned: false,
         fingerprint,
         publicKey: verified ? envelope.pk : null,
       };

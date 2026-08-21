@@ -9,7 +9,7 @@
  */
 
 import type { AltPage, PayloadEnvelope, EncryptedPayload, VisibleMeta } from '../types';
-import { base64urlEncode } from '../crypto/encoding';
+import { base64urlEncode, concatBytes } from '../crypto/encoding';
 import { encrypt } from '../crypto/aes-gcm';
 import { sign, exportPublicKey } from '../crypto/signing';
 import { compress } from '../compression';
@@ -95,9 +95,13 @@ export async function encodePageUnsanitized(
       const encrypted: EncryptedPayload = await encrypt(blocksCompressed, password);
       envelope.e = encrypted;
 
-      // Sign over the compressed blocks (the protected content)
+      // Sign over the visible meta AND the blocks. In partial mode meta+style
+      // travel in the clear (envelope.m), so signing blocks alone would leave
+      // title/description/author unprotected — a signed capsule whose visible
+      // meta anyone could rewrite. The signature must bind both.
       if (signingKeyPair) {
-        const signature = await sign(blocksCompressed, signingKeyPair.privateKey);
+        const signedBytes = concatBytes(metaCompressed, blocksCompressed);
+        const signature = await sign(signedBytes, signingKeyPair.privateKey);
         envelope.s = signature;
         envelope.pk = await exportPublicKey(signingKeyPair.publicKey);
       }
