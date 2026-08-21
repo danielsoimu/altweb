@@ -101,7 +101,7 @@ Before this announcement, ALTWEB went through an external security review: a ful
 
 It found real things. Content could impersonate its own provenance line. Identity derivation used a key-derivation function with weak economics against precomputed dictionaries. The signing path wasn't reproducible, so "deterministic builds" was false for exactly the case that matters — signed ones. The fetch guard had a DNS-rebinding window between checking an address and connecting to it.
 
-Every finding is fixed in this release: the nonce fence described above, Argon2id for identity derivation, deterministic RFC 6979 signing, an SSRF guard pinned into the socket's own DNS lookup, a strict CSP on the editor, and CI that runs typecheck, the full test suite, and the build on every push — including six regression tests aimed squarely at the provenance forgery.
+Every finding is fixed in this release: the nonce fence described above, Argon2id for identity derivation, deterministic RFC 6979 signing, an SSRF guard pinned into the socket's own DNS lookup, a strict CSP on the editor, and CI that runs typecheck, the full test suite, and the build on every push — including [eight regression tests](https://github.com/danielsoimu/altweb/blob/main/packages/mcp/src/frame.test.ts) aimed squarely at the provenance forgery.
 
 One recommendation I didn't take. The review suggested a per-user salt for key derivation. I kept the salt fixed and moved to Argon2id instead: a per-user salt would double what you have to remember exactly, and memory-hardness removes the economics of a precomputed dictionary rather than merely un-sharing it. That's a judgment call, it's documented in the code, and you're free to disagree with it.
 
