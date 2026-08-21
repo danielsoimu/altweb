@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "software.altweb/altweb-context",
+  "title": "ALTWEB Context Loader",
+  "description": "Loads signed ALTWEB context capsules — refuses unsigned, tampered, or untrusted by default.",
+  "websiteUrl": "https://altweb.software/mcp-loader/",
+  "repository": {
+    "url": "https://github.com/danielsoimu/altweb",
+    "source": "github"
+  },
+  "version": "1.0.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "altweb-context",
+      "version": "1.0.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "ALTWEB_TRUST_FILE",
+          "description": "Override the local trust file of allowed signer public keys (default: ~/.altweb/trusted-keys.json). A missing or empty trust file refuses every capsule.",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}
