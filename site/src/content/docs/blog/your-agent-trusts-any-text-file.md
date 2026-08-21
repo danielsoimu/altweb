@@ -19,7 +19,7 @@ One silent edit and the agent is running on someone else's instructions. Nothing
 
 ## This is not hypothetical
 
-It already happened at scale, and the research caught up with it the same year.
+It already happened at scale — and the research didn't lag behind it, it ran ahead: the mechanism was named and the fix was measured, and almost nothing in the agents shipping today changed.
 
 In early 2026, a [coordinated campaign](https://www.antiy.net/p/clawhavoc-analysis-of-large-scale-poisoning-campaign-targeting-the-openclaw-skill-market-for-ai-agents/) poisoned 1,184 published agent skills on a public registry — malware planted where agents go looking for capability. A [February audit of 3,984 skills](https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/) found that more than a third carried at least one security flaw, with 76 shipping confirmed malicious payloads. Some of those payloads wrote straight into the agent's own memory and persona files, so the compromise survived restarts. And the scanners meant to catch this don't: in June, [Trail of Bits](https://blog.trailofbits.com/2026/06/03/the-sorry-state-of-skill-distribution/) bypassed the ClawHub, Cisco, and Vercel skill detectors — three of the four techniques took under an hour to build. On August 17, OWASP published the [Agentic Skills Top 10](https://owasp.org/www-project-agentic-skills-top-10/) — a whole framework for a threat class that barely had a name eighteen months ago.
 
