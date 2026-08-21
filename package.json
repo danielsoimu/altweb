@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Signed context capsules for AI agents — Markdown compiled into self-contained, verifiable, optionally encrypted artifacts + an MCP loader that refuses unsigned or untrusted context. Verify before you inject.",
   "license": "AGPL-3.0-or-later",
-  "author": "Daniel C. Șoimu",
+  "author": "Daniel C. ȘOIMU",
   "homepage": "https://altweb.software",
   "repository": {
     "type": "git",

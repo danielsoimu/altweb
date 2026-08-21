@@ -4,7 +4,7 @@
   "description": "MCP server that loads ALTWEB signed context capsules into AI agents — verifies first, refuses unsigned, tampered, or untrusted context by default. Verify before you inject.",
   "type": "module",
   "license": "AGPL-3.0-or-later",
-  "author": "Daniel C. Șoimu",
+  "author": "Daniel C. ȘOIMU",
   "homepage": "https://altweb.software",
   "repository": {
     "type": "git",

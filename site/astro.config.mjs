@@ -1,4 +1,5 @@
 // @ts-check
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightBlog from 'starlight-blog';
@@ -42,7 +43,7 @@ const JSON_LD = JSON.stringify({
 		{
 			'@type': 'Person',
 			'@id': `${SITE}/#person`,
-			name: 'Daniel C. Șoimu',
+			name: 'Daniel C. ȘOIMU',
 			url: 'https://github.com/danielsoimu',
 		},
 	],
@@ -53,6 +54,20 @@ const JSON_LD = JSON.stringify({
 // services. Diagrams render client-side from a locally bundled mermaid.
 export default defineConfig({
 	site: 'https://altweb.software',
+	// Fold diacritics to ASCII inside github-slugger's slug() so the author URL
+	// slug / sitemap / BlogPosting id stay ASCII ("daniel-c-soimu") while the
+	// rendered display name stays verbatim. Anchored regex so the wrapper's own
+	// github-slugger/index.js import is not re-aliased.
+	vite: {
+		resolve: {
+			alias: [
+				{
+					find: /^github-slugger$/,
+					replacement: fileURLToPath(new URL('./src/lib/ascii-slugger.mjs', import.meta.url)),
+				},
+			],
+		},
+	},
 	integrations: [
 		starlight({
 			title: 'ALTWEB',
@@ -67,7 +82,7 @@ export default defineConfig({
 					// context poisoning, and the thinking behind ALTWEB.
 					authors: {
 						daniel: {
-							name: 'Daniel C. Șoimu',
+							name: 'Daniel C. ȘOIMU',
 							title: 'ALTWEB',
 							url: 'https://github.com/danielsoimu',
 						},
