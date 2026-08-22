@@ -3,7 +3,7 @@
  * (SECURITY-AUDIT-2026-08-22.md). One describe block per finding, each
  * exercising the exact attack the audit demonstrated.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import pako from 'pako';
 import { compress, decompress, MAX_COMPRESSED_BYTES } from '../src/compression';
 import { decodePage, hasSignature, MAX_ENVELOPE_CHARS } from '../src/codec/decoder';
@@ -18,19 +18,56 @@ import type { AltPage } from '../src/types';
 const STRONG_PASSPHRASE = 'hardening-suite-author-passphrase';
 
 describe('H1 - decompression bomb bounds CPU, not just memory', () => {
-  it('aborts a large bomb without inflating the whole stream', () => {
-    // ~512 MB of zeros compresses to ~500 KB. If the loop kept inflating to
-    // the end (the pre-fix behavior), this would take multiple seconds; the
-    // slice-fed loop stops within one slice past the 16 MiB cap.
-    const bomb = pako.deflate(new Uint8Array(512 * 1024 * 1024), { level: 9 });
-    expect(bomb.length).toBeLessThan(MAX_COMPRESSED_BYTES);
-    const start = performance.now();
-    expect(() => decompress(bomb)).toThrow(/exceeds/);
-    const elapsed = performance.now() - start;
-    // Full inflation of 512 MB takes seconds; the abort path is bounded by
-    // cap + one slice (~66 MB worst case). 1s is a generous CI margin.
-    expect(elapsed).toBeLessThan(1000);
-  });
+  // Bomb fixtures are built ONCE in beforeAll, with its own generous timeout:
+  // pako.deflate over hundreds of MB is the expensive part (~6 s in a slow
+  // container) and used to run inside the it(), tripping vitest's default 5 s
+  // timeout as an indistinguishable "test timed out" — on the test guarding
+  // the audit's highest-severity finding. Streaming a reused zero chunk keeps
+  // peak memory at one chunk instead of the full plaintext.
+  let bomb32: Uint8Array; // ~32 MB expansion — reference point past the cap
+  let bomb512: Uint8Array; // ~512 MB expansion — the attack
+
+  function zeroBomb(totalMb: number): Uint8Array {
+    const CHUNK_MB = 16;
+    const chunk = new Uint8Array(CHUNK_MB * 1024 * 1024);
+    const deflator = new pako.Deflate({ level: 9 });
+    const rounds = totalMb / CHUNK_MB;
+    for (let i = 0; i < rounds; i++) deflator.push(chunk, i === rounds - 1);
+    if (deflator.err) throw new Error(String(deflator.msg));
+    return deflator.result as Uint8Array;
+  }
+
+  beforeAll(() => {
+    bomb32 = zeroBomb(32);
+    bomb512 = zeroBomb(512);
+  }, 120_000);
+
+  it(
+    'aborts a large bomb without inflating the whole stream',
+    () => {
+      expect(bomb512.length).toBeLessThan(MAX_COMPRESSED_BYTES);
+
+      const start32 = performance.now();
+      expect(() => decompress(bomb32)).toThrow(/exceeds/);
+      const t32 = performance.now() - start32;
+
+      const start512 = performance.now();
+      expect(() => decompress(bomb512)).toThrow(/exceeds/);
+      const t512 = performance.now() - start512;
+
+      // Absolute bound: the abort path does cap + at most one slice (~66 MB)
+      // of work regardless of bomb size (measured ~120 ms here, ~300 ms in a
+      // slow container; 1 s keeps CI margin).
+      expect(t512).toBeLessThan(1000);
+      // Machine-relative bound: the curve must be FLAT. Pre-fix, the 512 MB
+      // bomb took ~6x the 32 MB one because the whole stream kept inflating;
+      // post-fix both do the same capped work.
+      expect(t512).toBeLessThan(t32 * 3 + 300);
+    },
+    // Explicit timeout well above the assertion bounds: if the defense ever
+    // regresses, the test must FAIL on the numbers above, not time out.
+    30_000
+  );
 
   it('rejects oversized compressed input before inflating anything', () => {
     const oversized = new Uint8Array(MAX_COMPRESSED_BYTES + 1);

@@ -5,7 +5,7 @@
  * hostile-date robustness — all against the ACTUAL inline runtime shipped in
  * .altweb.html artifacts, not the core decoder.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { createHash } from 'node:crypto';
 import pako from 'pako';
 import { encodePageUnsanitized } from '../src/codec/encoder';
@@ -107,13 +107,27 @@ describe('CSP: script-src pins both inline scripts by sha256 hash', () => {
 });
 
 describe('runtime decompression cap (DecompressionStream path)', () => {
-  it('refuses a decompression bomb instead of materializing it', async () => {
-    // ~100 MB of zeros -> ~100 KB deflate. The runtime must stop at the
-    // 16 MiB output cap, not buffer 100 MB in the reader tab.
-    const bomb = pako.deflate(new Uint8Array(100 * 1024 * 1024), { level: 9 });
-    const envelope = { v: 1, enc: false, d: base64urlEncode(bomb) };
-    await expect(runtimeFor(jsonToB64url(envelope))()).rejects.toThrow(/exceeds/);
-  });
+  // Fixture built in beforeAll: deflating the plaintext is the slow part
+  // (seconds in a slow container) and must not count against the it() budget
+  // of the assertion that guards the defense.
+  let bomb: Uint8Array; // ~96 MB expansion — far past the 16 MiB cap
+  beforeAll(() => {
+    const chunk = new Uint8Array(16 * 1024 * 1024);
+    const deflator = new pako.Deflate({ level: 9 });
+    for (let i = 0; i < 6; i++) deflator.push(chunk, i === 5);
+    bomb = deflator.result as Uint8Array;
+  }, 60_000);
+
+  it(
+    'refuses a decompression bomb instead of materializing it',
+    async () => {
+      // The runtime must stop at the 16 MiB output cap, not buffer ~100 MB
+      // in the reader tab.
+      const envelope = { v: 1, enc: false, d: base64urlEncode(bomb) };
+      await expect(runtimeFor(jsonToB64url(envelope))()).rejects.toThrow(/exceeds/);
+    },
+    30_000
+  );
 
   it('still decodes legitimate capsules', async () => {
     const hash = await encodePageUnsanitized(page);
