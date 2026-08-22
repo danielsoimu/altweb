@@ -80,8 +80,13 @@ async function renderedHtmlFor(hash: string): Promise<string> {
     title: '',
   };
   const stubWindow = { matchMedia: () => ({ matches: false }) };
-  const factory = new Function('document', 'window', `return ${harnessSrc.trim()}`);
-  const hooks = factory(stubDocument, stubWindow);
+  // formatText() sanitizes block content through the bundled DOMPurify global,
+  // which the extracted runtime does not carry. A passthrough stub is enough:
+  // these tests probe attribute-position injection (align/level/height), which
+  // is independent of the content-sanitization path.
+  const stubDOMPurify = { sanitize: (html: string) => String(html) };
+  const factory = new Function('document', 'window', 'DOMPurify', `return ${harnessSrc.trim()}`);
+  const hooks = factory(stubDocument, stubWindow, stubDOMPurify);
   hooks.renderPage(await hooks.decodePage());
   return app.innerHTML;
 }
@@ -120,6 +125,52 @@ describe('standalone runtime URL sanitization (hand-crafted envelope)', () => {
     expect(out).toContain('https://example.com');
     // The legit raster data URI survives; the text/html one is dropped to empty.
     expect(out).toContain('data:image/png;base64,AAAA');
+  });
+});
+
+describe('standalone runtime attribute-injection hardening (hand-crafted envelope)', () => {
+  // Structure fields that land in attribute/tag positions (block.align, block.l,
+  // block.h) are attacker-controlled in a fabricated envelope. If interpolated
+  // raw they break out of the attribute and inject an event handler that the
+  // capsule CSP (script-src 'unsafe-inline') would happily execute. These prove
+  // the runtime allowlists/coerces them so no handler ever reaches the DOM.
+  it('block.align outside the allowlist cannot break out of the class attribute', async () => {
+    const hostile: AltPage = {
+      v: 1,
+      meta: { title: 'x', created: 1, modified: 1, lang: 'en' },
+      blocks: [{ t: 'p', c: 'benign', align: 'left" onmouseover="alert(1)' } as unknown as AltPage['blocks'][number]],
+      style: { font: 'sans', theme: 'light' },
+    };
+    const out = await renderedHtmlFor(await encodePageUnsanitized(hostile));
+    expect(out).not.toContain('onmouseover');
+    expect(out).not.toContain('alert(1)');
+    expect(out).toContain('class=""'); // non-allowlisted align collapses to empty
+  });
+
+  it('block.l cannot inject into the heading tag', async () => {
+    const hostile: AltPage = {
+      v: 1,
+      meta: { title: 'x', created: 1, modified: 1, lang: 'en' },
+      blocks: [{ t: 'h', l: 'x"><img src=x onerror=alert(2)>', c: 'hdr' } as unknown as AltPage['blocks'][number]],
+      style: { font: 'sans', theme: 'light' },
+    };
+    const out = await renderedHtmlFor(await encodePageUnsanitized(hostile));
+    expect(out).not.toContain('onerror');
+    expect(out).not.toContain('alert(2)');
+    expect(out).toContain('<h2'); // non-numeric level coerces to 2
+  });
+
+  it('block.h (spacer) cannot break out of the style attribute', async () => {
+    const hostile: AltPage = {
+      v: 1,
+      meta: { title: 'x', created: 1, modified: 1, lang: 'en' },
+      blocks: [{ t: 'space', h: 'x" onmouseover="alert(3)' } as unknown as AltPage['blocks'][number]],
+      style: { font: 'sans', theme: 'light' },
+    };
+    const out = await renderedHtmlFor(await encodePageUnsanitized(hostile));
+    expect(out).not.toContain('onmouseover');
+    expect(out).not.toContain('alert(3)');
+    expect(out).toContain('height:40px'); // non-numeric height coerces to the 40 default
   });
 });
 

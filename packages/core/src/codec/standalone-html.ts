@@ -73,7 +73,7 @@ export function generateStandaloneHTML(options: StandaloneOptions): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; form-action 'none'; base-uri 'none';">
   <meta name="altweb-hash" content="${hash}">
   <title>${escapeHtml(title)}</title>
   <style>
@@ -886,7 +886,7 @@ ${DOMPURIFY_CODE}
 
     function escapeHtml(str) {
       if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     // URL scheme guards mirror core's sanitize.ts so the standalone path is as
@@ -985,12 +985,33 @@ ${DOMPURIFY_CODE}
         '</' + tag + '>';
     }
 
+    // Structure fields that land in attribute/tag positions must never reach the
+    // HTML string raw: the runtime decodes whatever envelope it is handed, including
+    // a hand-crafted one that never passed the encoder's schema pass. Allowlist /
+    // coerce them here (align, heading level, spacer height) so a fabricated block
+    // cannot break out of its attribute and inject an event handler.
+    const SAFE_ALIGN = { left: 1, center: 1, right: 1, justify: 1 };
+    function alignClassOf(block) {
+      // hasOwnProperty so inherited keys (toString/constructor/__proto__) never
+      // match — the guard must be an allowlist, not a truthy prototype lookup.
+      return (block.align && Object.prototype.hasOwnProperty.call(SAFE_ALIGN, block.align))
+        ? ' text-' + block.align : '';
+    }
+    function safeLevel(l) {
+      const n = parseInt(l, 10);
+      return (n >= 1 && n <= 6) ? n : 2;
+    }
+    function safeSpacerHeight(h) {
+      const n = parseInt(h, 10);
+      return (n >= 0 && n <= 400) ? n : 40;
+    }
+
     function renderBlock(block) {
-      const alignClass = block.align ? ' text-' + block.align : '';
+      const alignClass = alignClassOf(block);
 
       switch(block.t) {
         case 'h':
-          const level = block.l || 2;
+          const level = safeLevel(block.l);
           return '<h' + level + ' class="' + alignClass + '">' + formatText(block.c) + '</h' + level + '>';
         case 'p':
           return '<p class="' + alignClass + '">' + formatText(block.c) + '</p>';
@@ -1020,7 +1041,7 @@ ${DOMPURIFY_CODE}
         case 'hr':
           return '<hr>';
         case 'space':
-          return '<div style="height:' + (block.h || 40) + 'px"></div>';
+          return '<div style="height:' + safeSpacerHeight(block.h) + 'px"></div>';
         case 'img':
           if (!block.d) return '';
           return '<figure><img src="' + escapeHtml(safeImgSrc(block.d)) + '" alt="' + escapeHtml(block.alt || '') + '">' +
