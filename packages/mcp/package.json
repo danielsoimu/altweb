@@ -1,11 +1,11 @@
 {
   "name": "altweb-context",
   "mcpName": "software.altweb/altweb-context",
-  "version": "1.0.3",
-  "description": "MCP server that loads ALTWEB signed context capsules into AI agents — verifies first, refuses unsigned, tampered, or untrusted context by default. Verify before you inject.",
+  "version": "1.1.0",
+  "description": "MCP server that loads ALTWEB signed context capsules into AI agents \u2014 verifies first, refuses unsigned, tampered, or untrusted context by default. Verify before you inject.",
   "type": "module",
   "license": "AGPL-3.0-or-later",
-  "author": "Daniel C. ȘOIMU",
+  "author": "Daniel C. \u0218OIMU",
   "homepage": "https://altweb.software",
   "repository": {
     "type": "git",
