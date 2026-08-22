@@ -55,6 +55,17 @@ export interface DerivedIdentity {
  * // Publish identity.fingerprint publicly to establish authorship
  */
 export async function deriveIdentityFromPassphrase(passphrase: string): Promise<DerivedIdentity> {
+  // The floor is enforced AT DERIVATION, not only in the editor UX: with a
+  // fixed salt, the passphrase's entropy is the identity's entire foundation,
+  // and every caller (CLI, library consumers) must hit the same wall the
+  // editor shows. deriveIdentityFromPassphrase("a") must not mint a real key.
+  const { valid } = validateIdentityPassphrase(passphrase);
+  if (!valid) {
+    throw new Error(
+      'passphrase below the identity floor: use at least 16 characters ' +
+        'scoring >= 3 (add length, mixed case, or digits + symbols)'
+    );
+  }
   // 1. Derive a 32-byte seed with Argon2id (memory-hard; see header comment)
   const seed = argon2id(new TextEncoder().encode(passphrase), IDENTITY_SALT_V2, {
     m: ARGON2_MEM_KIB,

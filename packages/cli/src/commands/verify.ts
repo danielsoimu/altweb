@@ -14,6 +14,7 @@
 import { parseArgs } from 'node:util';
 import { base64urlDecode, decodePage, hasSignature } from '@altweb/core';
 import { resolveHash } from '../artifact';
+import { stripControl } from '../tty';
 
 function envelopePublicKey(hash: string): string | undefined {
   try {
@@ -49,7 +50,9 @@ export async function verifyCommand(argv: string[]): Promise<number> {
   const result = await decodePage(hash, values.password);
 
   const lines = [
-    `title:      ${result.page.meta.title}`,
+    // The title is capsule bytes on a human-facing verdict line — strip
+    // terminal escapes so it cannot repaint the VALID/INVALID verdict below.
+    `title:      ${stripControl(result.page.meta.title)}`,
     `blocks:     ${result.page.blocks.length}`,
     `signature:  ${signed ? (result.verified ? `VALID (${result.publicKeyFingerprint})` : 'INVALID') : 'unsigned'}`,
   ];

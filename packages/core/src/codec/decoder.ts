@@ -16,6 +16,23 @@ import { decompress } from '../compression';
 import { validatePageStructure } from '../validate/validators';
 import { sanitizePage } from '../sanitize/sanitize';
 
+/**
+ * Hard cap on the base64url envelope length (characters), checked before any
+ * decoding work. Derived from the compression caps: a legitimate envelope is
+ * at most ~17 MiB of compressed payload, base64url-expanded by 4/3 plus JSON
+ * framing. Without this cap a multi-hundred-MB input buys a same-sized buffer
+ * and a huge JSON.parse before the per-field caps ever run.
+ */
+export const MAX_ENVELOPE_CHARS = 24 * 1024 * 1024;
+
+function assertEnvelopeSize(hash: string): void {
+  if (hash.length > MAX_ENVELOPE_CHARS) {
+    throw new ValidationError(
+      `Envelope exceeds the ${MAX_ENVELOPE_CHARS} character limit`
+    );
+  }
+}
+
 export class DecryptionError extends Error {
   constructor(message: string) {
     super(message);
@@ -41,6 +58,8 @@ export async function decodePage(
   hash: string,
   password?: string
 ): Promise<DecodeResult> {
+  assertEnvelopeSize(hash);
+
   // 1. Base64url decoding
   const envelopeBytes = base64urlDecode(hash);
   const envelopeJson = new TextDecoder().decode(envelopeBytes);
@@ -190,6 +209,7 @@ export async function decodePage(
 // Get the visible meta without a password (for partial encryption)
 export async function getVisibleMeta(hash: string): Promise<VisibleMeta | null> {
   try {
+    assertEnvelopeSize(hash);
     const envelopeBytes = base64urlDecode(hash);
     const envelopeJson = new TextDecoder().decode(envelopeBytes);
     const envelope: PayloadEnvelope = JSON.parse(envelopeJson);
@@ -209,6 +229,7 @@ export async function getVisibleMeta(hash: string): Promise<VisibleMeta | null> 
 // Check whether the content has visible meta
 export function hasVisibleMeta(hash: string): boolean {
   try {
+    assertEnvelopeSize(hash);
     const envelopeBytes = base64urlDecode(hash);
     const envelopeJson = new TextDecoder().decode(envelopeBytes);
     const envelope: PayloadEnvelope = JSON.parse(envelopeJson);
@@ -220,6 +241,7 @@ export function hasVisibleMeta(hash: string): boolean {
 
 export function isEncryptedContent(hash: string): boolean {
   try {
+    assertEnvelopeSize(hash);
     const envelopeBytes = base64urlDecode(hash);
     const envelopeJson = new TextDecoder().decode(envelopeBytes);
     const envelope: PayloadEnvelope = JSON.parse(envelopeJson);
@@ -231,6 +253,7 @@ export function isEncryptedContent(hash: string): boolean {
 
 export function hasSignature(hash: string): boolean {
   try {
+    assertEnvelopeSize(hash);
     const envelopeBytes = base64urlDecode(hash);
     const envelopeJson = new TextDecoder().decode(envelopeBytes);
     const envelope: PayloadEnvelope = JSON.parse(envelopeJson);

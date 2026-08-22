@@ -28,13 +28,23 @@ export function loadSavedIdentity(): SavedIdentity | null {
 }
 
 export function saveIdentity(identity: DerivedIdentity): void {
-  mkdirSync(ALTWEB_DIR, { recursive: true });
+  // 0700 at creation: the dir will also hold the trust file, and on a
+  // multi-user host a default-umask dir leaks both. mkdir's mode only
+  // applies when creating, so repair pre-existing dirs with chmod.
+  mkdirSync(ALTWEB_DIR, { recursive: true, mode: 0o700 });
+  chmodSync(ALTWEB_DIR, 0o700);
   const saved: SavedIdentity = {
     publicKey: identity.publicKeyBase64,
     fingerprint: identity.fingerprint,
     created: Date.now(),
   };
-  writeFileSync(IDENTITY_FILE, JSON.stringify(saved, null, 2) + '\n', 'utf8');
+  // mode on writeFileSync applies at CREATION — no write-0644-then-chmod
+  // window. For a pre-existing file the mode option is a no-op, so chmod
+  // still runs to repair old installs.
+  writeFileSync(IDENTITY_FILE, JSON.stringify(saved, null, 2) + '\n', {
+    encoding: 'utf8',
+    mode: 0o600,
+  });
   chmodSync(IDENTITY_FILE, 0o600);
 }
 

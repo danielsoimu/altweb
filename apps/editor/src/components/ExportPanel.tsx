@@ -65,11 +65,15 @@ export function ExportPanel({
   const [result, setResult] = useState<ExportResult | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // A new capsule invalidates the previous result
+  // A new capsule invalidates the previous result. signPassphrase is NOT a
+  // dependency: a result only exists after a successful export, which also
+  // unlocks the identity and hides the passphrase input — the only
+  // post-result passphrase change is the zeroing right after unlock, which
+  // must not wipe the fresh result.
   useEffect(() => {
     setResult(null);
     setCopied(false);
-  }, [title, password, signEnabled, signPassphrase, baseUrl]);
+  }, [title, password, signEnabled, baseUrl]);
 
   const createCapsule = async () => {
     setBusy(true);
@@ -92,6 +96,9 @@ export function ExportPanel({
           );
         }
         onIdentityUnlocked(identity, saveIdentity(identity));
+        // The passphrase has served its one purpose (deriving the identity);
+        // drop it from state so the secret does not outlive the unlock.
+        setSignPassphrase('');
       }
 
       const page = buildPage(blocks, title);

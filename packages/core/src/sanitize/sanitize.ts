@@ -4,7 +4,14 @@
  */
 
 import DOMPurify from 'dompurify';
-import type { AltPage, ContentBlock, ListItem, PageStyle } from '../types/content';
+import type {
+  AltPage,
+  ContentBlock,
+  ListItem,
+  PageStyle,
+  PageHeader,
+  PageFooter,
+} from '../types/content';
 
 function sanitizeListItems(nodes: ListItem[]): ListItem[] {
   return nodes.map((node) => ({
@@ -29,10 +36,66 @@ export function sanitizePage(page: AltPage): AltPage {
       author: page.meta.author
         ? DOMPurify.sanitize(page.meta.author, { ALLOWED_TAGS: [] })
         : undefined,
+      header: page.meta.header ? sanitizeHeader(page.meta.header) : undefined,
+      footer: page.meta.footer ? sanitizeFooter(page.meta.footer) : undefined,
     },
     blocks: page.blocks.map(sanitizeBlock),
     style: sanitizeStyle(page.style),
   };
+}
+
+/**
+ * Header/footer fields survive the zod schema and land in DecodeResult.page,
+ * so a consumer that renders them (any non-standalone integrator relying on
+ * "the library sanitized it") must get the same guarantees as blocks/meta —
+ * not raw attacker strings.
+ */
+function sanitizeHeader(header: PageHeader): PageHeader {
+  return {
+    ...header,
+    logo: header.logo ? sanitizeImageSrc(header.logo) : undefined,
+    customText: header.customText
+      ? DOMPurify.sanitize(header.customText, { ALLOWED_TAGS: [] })
+      : undefined,
+  };
+}
+
+function sanitizeFooter(footer: PageFooter): PageFooter {
+  return {
+    ...footer,
+    copyright: footer.copyright
+      ? DOMPurify.sanitize(footer.copyright, { ALLOWED_TAGS: [] })
+      : undefined,
+    customText: footer.customText
+      ? DOMPurify.sanitize(footer.customText, { ALLOWED_TAGS: [] })
+      : undefined,
+    links: footer.links
+      ? footer.links.map((link) => ({
+          label: DOMPurify.sanitize(link.label, { ALLOWED_TAGS: [] }),
+          url: sanitizeUrl(link.url),
+        }))
+      : undefined,
+  };
+}
+
+/**
+ * Image sources may be a data URI (sanitized) or an http(s) URL — the same
+ * rule the standalone renderer applies (safeImgSrc). Everything else is
+ * dropped to an empty string.
+ */
+function sanitizeImageSrc(src: string): string {
+  if (src.startsWith('data:')) {
+    return validateDataUri(src);
+  }
+  try {
+    const parsed = new URL(src);
+    if (['http:', 'https:'].includes(parsed.protocol)) {
+      return src;
+    }
+  } catch {
+    // fall through to the rejection below
+  }
+  return '';
 }
 
 function sanitizeBlock(block: ContentBlock): ContentBlock {

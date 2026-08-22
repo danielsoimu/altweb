@@ -3,8 +3,27 @@
  * Generates a self-contained HTML file that matches PageRenderer exactly
  */
 
+import { sha256 } from '@noble/hashes/sha2.js';
 import type { Language } from '../types';
 import { DOMPURIFY_CODE } from './dompurify-blob.generated';
+import { MAX_DECOMPRESSED_BYTES } from '../compression';
+
+/**
+ * CSP hash-source for an inline script: SHA-256 over the exact bytes between
+ * <script> and </script>, base64-encoded (standard alphabet — CSP does not
+ * use base64url). Both inline scripts are static per generated file, so
+ * hash-pinning them lets script-src drop 'unsafe-inline' entirely: any future
+ * regression that reintroduces a raw script sink fails closed as a console
+ * error instead of executing in the reader's browser.
+ */
+function cspScriptHash(script: string): string {
+  const digest = sha256(new TextEncoder().encode(script));
+  let binary = '';
+  for (const byte of digest) {
+    binary += String.fromCharCode(byte);
+  }
+  return `'sha256-${btoa(binary)}'`;
+}
 
 export interface StandaloneOptions {
   hash: string;
@@ -68,12 +87,774 @@ export function generateStandaloneHTML(options: StandaloneOptions): string {
   }
   const t = standaloneTranslations[lang];
 
+  const dompurifyScript = `
+  /*! @license DOMPurify 3.4.13 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.4.13/LICENSE */
+${DOMPURIFY_CODE}
+  `;
+
+  const runtimeScript = `
+  (function() {
+    const DATA = '${hash}';
+    const IS_ENCRYPTED = ${isEncrypted};
+    const T = ${JSON.stringify(t)};
+    const app = document.getElementById('app');
+
+    // Accent color palette with theme-aware variants
+    const accentColors = {
+      blue: { light: '#2563eb', dark: '#93c5fd' },
+      green: { light: '#059669', dark: '#6ee7b7' },
+      purple: { light: '#7c3aed', dark: '#c4b5fd' },
+      rose: { light: '#e11d48', dark: '#fda4af' },
+      orange: { light: '#ea580c', dark: '#fdba74' },
+      cyan: { light: '#0891b2', dark: '#67e8f9' },
+    };
+
+    function getAccentHex(colorName, theme, prefersDark) {
+      const name = colorName || 'blue';
+      const color = accentColors[name] || accentColors.blue;
+      const isDark = theme === 'dark' || (theme === 'auto' && prefersDark);
+      return isDark ? color.dark : color.light;
+    }
+
+    function b64urlDecode(str) {
+      // Canonical decode, mirroring core: reject foreign charset, bad length,
+      // and non-zero trailing bits — the badge must never say "verified" on
+      // an envelope string that the CLI's decoder would refuse.
+      if (!/^[A-Za-z0-9_-]*$/.test(str)) throw new Error('invalid base64url');
+      const rem = str.length % 4;
+      if (rem === 1) throw new Error('invalid base64url');
+      if (rem !== 0) {
+        const last = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+          .indexOf(str[str.length - 1]);
+        if ((last & (rem === 2 ? 15 : 3)) !== 0) throw new Error('non-canonical base64url');
+      }
+      str = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (str.length % 4) str += '=';
+      const binary = atob(str);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    async function deriveKey(password, salt) {
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+      return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+      );
+    }
+
+    async function decrypt(encrypted, password) {
+      const salt = b64urlDecode(encrypted.salt);
+      const iv = b64urlDecode(encrypted.iv);
+      const ciphertext = b64urlDecode(encrypted.ct);
+      const key = await deriveKey(password, salt);
+      const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+      return new Uint8Array(decrypted);
+    }
+
+    // Output cap mirrors core decompress(): the envelope is attacker
+    // controlled, and without a cap a small deflate bomb materializes GBs on
+    // the reader's main thread. The check runs between reads —
+    // DecompressionStream yields incrementally, so cancel() stops the work.
+    async function decompress(data) {
+      if (typeof DecompressionStream === 'undefined') {
+        throw new Error(T.incompatibleBrowser);
+      }
+      const MAX_OUT = ${MAX_DECOMPRESSED_BYTES};
+      const ds = new DecompressionStream('deflate');
+      const writer = ds.writable.getWriter();
+      writer.write(data).catch(function() {});
+      writer.close().catch(function() {});
+      const reader = ds.readable.getReader();
+      const chunks = [];
+      let total = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.length;
+        if (total > MAX_OUT) {
+          reader.cancel().catch(function() {});
+          throw new Error('Decompressed payload exceeds the ' + MAX_OUT + ' byte limit');
+        }
+        chunks.push(value);
+      }
+      const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+      const result = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return result;
+    }
+
+    // Mirrors the core verify(): ECDSA P-256 / SHA-256, SPKI public key,
+    // raw signature — over the exact compressed bytes that were signed.
+    // High-s (malleated) signatures are rejected exactly like core: for any
+    // (r, s) the pair (r, n - s) verifies too, and accepting it would let a
+    // third party fork the capsule's byte identity without holding any key.
+    const P256_HALF_N =
+      BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551') >> 1n;
+    function isLowS(sig) {
+      if (sig.length !== 64) return true;
+      let s = 0n;
+      for (let i = 32; i < 64; i++) s = (s << 8n) | BigInt(sig[i]);
+      return s <= P256_HALF_N;
+    }
+    async function verifySignature(signedBytes, signatureB64, publicKeyB64) {
+      try {
+        const sigBytes = b64urlDecode(signatureB64);
+        if (!isLowS(sigBytes)) return false;
+        const key = await crypto.subtle.importKey(
+          'spki',
+          b64urlDecode(publicKeyB64),
+          { name: 'ECDSA', namedCurve: 'P-256' },
+          false,
+          ['verify']
+        );
+        return await crypto.subtle.verify(
+          { name: 'ECDSA', hash: 'SHA-256' },
+          key,
+          sigBytes,
+          signedBytes
+        );
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function decodePage(password) {
+      const envelopeBytes = b64urlDecode(DATA);
+      const envelopeJson = new TextDecoder().decode(envelopeBytes);
+      const envelope = JSON.parse(envelopeJson);
+
+      let page;
+      // The signature covers the compressed payload bytes; each branch
+      // already holds them — keep them for real verification below.
+      let signedBytes = null;
+
+      if (envelope.enc) {
+        if (!password) throw new Error('Password required');
+
+        // Check for partial encryption (visible meta in envelope.m)
+        if (envelope.m) {
+          // Partial encryption: meta visible, blocks encrypted
+          const metaCompressed = b64urlDecode(envelope.m);
+          const metaBytes = await decompress(metaCompressed);
+          const visibleMeta = JSON.parse(new TextDecoder().decode(metaBytes));
+
+          // Decrypt blocks
+          const blocksCompressed = await decrypt(envelope.e, password);
+          // Partial mode signs meta || blocks, so the visible meta is covered too.
+          signedBytes = new Uint8Array(metaCompressed.length + blocksCompressed.length);
+          signedBytes.set(metaCompressed, 0);
+          signedBytes.set(blocksCompressed, metaCompressed.length);
+          const blocksBytes = await decompress(blocksCompressed);
+          const blocksData = JSON.parse(new TextDecoder().decode(blocksBytes));
+
+          // Merge visible meta with decrypted blocks
+          page = {
+            v: blocksData.v || 1,
+            meta: visibleMeta.meta,
+            style: visibleMeta.style,
+            blocks: blocksData.blocks || [],
+            nav: blocksData.nav,
+            indexHash: blocksData.indexHash,
+          };
+        } else {
+          // Full encryption: everything encrypted
+          const compressed = await decrypt(envelope.e, password);
+          signedBytes = compressed;
+          const jsonBytes = await decompress(compressed);
+          page = JSON.parse(new TextDecoder().decode(jsonBytes));
+        }
+      } else {
+        // Public content
+        const compressed = b64urlDecode(envelope.d);
+        signedBytes = compressed;
+        const jsonBytes = await decompress(compressed);
+        page = JSON.parse(new TextDecoder().decode(jsonBytes));
+      }
+
+      // REAL cryptographic verification — a present-but-invalid signature
+      // must come back loud, never as "verified".
+      const signed = !!(envelope.s && envelope.pk);
+      const verified = signed
+        ? await verifySignature(signedBytes, envelope.s, envelope.pk)
+        : false;
+      const signatureInvalid = signed && !verified;
+      const fingerprint = verified ? await computeFingerprint(envelope.pk) : null;
+
+      return {
+        page,
+        signed,
+        verified,
+        signatureInvalid,
+        // Partial-mode signatures now cover meta || blocks, so the visible
+        // meta (title/description/author) is protected too — no weaker
+        // "meta unsigned" state remains.
+        partialSigned: false,
+        fingerprint,
+        publicKey: verified ? envelope.pk : null,
+      };
+    }
+
+    async function computeFingerprint(publicKeyBase64) {
+      const publicKeyData = b64urlDecode(publicKeyBase64);
+      const hash = await crypto.subtle.digest('SHA-256', publicKeyData);
+      const hashArray = new Uint8Array(hash);
+      // Format: first 8 bytes as hex with colons
+      return Array.from(hashArray.slice(0, 8))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join(':');
+    }
+
+    // Helper to get visible meta from envelope (for password prompt)
+    async function getVisibleMeta() {
+      try {
+        const envelopeBytes = b64urlDecode(DATA);
+        const envelopeJson = new TextDecoder().decode(envelopeBytes);
+        const envelope = JSON.parse(envelopeJson);
+
+        if (envelope.m) {
+          const metaCompressed = b64urlDecode(envelope.m);
+          const metaBytes = await decompress(metaCompressed);
+          return JSON.parse(new TextDecoder().decode(metaBytes));
+        }
+      } catch (e) {
+        console.error('Error getting visible meta:', e);
+      }
+      return null;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // URL scheme guards mirror core's sanitize.ts so the standalone path is as
+    // safe as the core path, not just CSP-dependent. encodePage() already
+    // sanitizes at build time; this re-guards at render time because the
+    // runtime decodes whatever hash it is handed, including a hand-crafted
+    // envelope that never went through the encoder.
+    function safeHref(url) {
+      try {
+        var p = new URL(String(url));
+        if (p.protocol === 'http:' || p.protocol === 'https:' || p.protocol === 'mailto:') return url;
+        return '#blocked';
+      } catch (e) {
+        return '#invalid';
+      }
+    }
+    function safeImgSrc(url) {
+      var s = String(url);
+      if (/^data:image\\/(png|jpe?g|gif|webp|svg\\+xml);base64,[A-Za-z0-9+/=]+$/i.test(s)) return s;
+      try {
+        var p = new URL(s);
+        if (p.protocol === 'http:' || p.protocol === 'https:') return s;
+      } catch (e) {}
+      return '';
+    }
+
+    // A hostile meta.created/modified must degrade to "no timestamp",
+    // not abort the whole render with a RangeError from toISOString().
+    function isValidDate(ts) {
+      return !isNaN(new Date(ts).getTime());
+    }
+
+    function formatTimestamp(timestamp, mode) {
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      if (mode === 'date') {
+        return year + '-' + month + '-' + day;
+      }
+
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes;
+    }
+
+    // Convert inline markdown to HTML
+    // Handles: **bold**, *italic*, __underline__, ~~strike~~, ==highlight==, \`code\`, [link](url)
+    function inlineMarkdownToHtml(text) {
+      if (!text) return '';
+      var html = text;
+      // Escape HTML entities first (but preserve our markdown)
+      html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      // Links [text](url) - do first to avoid interference
+      html = html.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      // Bold **text** - non-greedy to handle nested/adjacent
+      html = html.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+      // Italic *text* - non-greedy
+      html = html.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
+      // Underline __text__ - non-greedy
+      html = html.replace(/__(.+?)__/g, '<u>$1</u>');
+      // Strikethrough ~~text~~ - non-greedy
+      html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+      // Highlight ==text== - non-greedy
+      html = html.replace(/==(.+?)==/g, '<mark>$1</mark>');
+      // Inline code \`text\`
+      html = html.replace(/\`([^\`]+)\`/g, '<code>$1</code>');
+      // Convert newlines to <br>
+      html = html.replace(/\\n/g, '<br>');
+      return html;
+    }
+
+    function formatText(str) {
+      if (!str) return '';
+      // First convert markdown to HTML, then sanitize
+      var html = inlineMarkdownToHtml(str);
+      // Use DOMPurify for secure HTML sanitization
+      // Allow only safe inline formatting tags, no attributes except href on links
+      return DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ['strong', 'b', 'em', 'i', 'code', 'br', 'a', 'u', 's', 'mark', 'sub', 'sup'],
+        ALLOWED_ATTR: ['href', 'target', 'rel'],
+        ALLOW_DATA_ATTR: false,
+        ADD_ATTR: ['target'],
+        FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'svg', 'math'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+      });
+    }
+
+    function renderListNodes(nodes, tag, alignClass) {
+      return '<' + tag + (alignClass ? ' class="' + alignClass + '"' : '') + '>' +
+        nodes.map(function(node) {
+          var task = node.task
+            ? '<input type="checkbox" disabled' + (node.done ? ' checked' : '') + '> '
+            : '';
+          var children = (node.children && node.children.length)
+            ? renderListNodes(node.children, tag, '')
+            : '';
+          return '<li' + (node.task ? ' class="task-item"' : '') + '>' +
+            task + formatText(node.c) + children + '</li>';
+        }).join('') +
+        '</' + tag + '>';
+    }
+
+    // Structure fields that land in attribute/tag positions must never reach the
+    // HTML string raw: the runtime decodes whatever envelope it is handed, including
+    // a hand-crafted one that never passed the encoder's schema pass. Allowlist /
+    // coerce them here (align, heading level, spacer height) so a fabricated block
+    // cannot break out of its attribute and inject an event handler.
+    const SAFE_ALIGN = { left: 1, center: 1, right: 1, justify: 1 };
+    function alignClassOf(block) {
+      // hasOwnProperty so inherited keys (toString/constructor/__proto__) never
+      // match — the guard must be an allowlist, not a truthy prototype lookup.
+      return (block.align && Object.prototype.hasOwnProperty.call(SAFE_ALIGN, block.align))
+        ? ' text-' + block.align : '';
+    }
+    function safeLevel(l) {
+      const n = parseInt(l, 10);
+      return (n >= 1 && n <= 6) ? n : 2;
+    }
+    function safeSpacerHeight(h) {
+      const n = parseInt(h, 10);
+      return (n >= 0 && n <= 400) ? n : 40;
+    }
+
+    function renderBlock(block) {
+      const alignClass = alignClassOf(block);
+
+      switch(block.t) {
+        case 'h':
+          const level = safeLevel(block.l);
+          return '<h' + level + ' class="' + alignClass + '">' + formatText(block.c) + '</h' + level + '>';
+        case 'p':
+          return '<p class="' + alignClass + '">' + formatText(block.c) + '</p>';
+        case 'a':
+          return '<a href="' + escapeHtml(safeHref(block.url)) + '" target="_blank" rel="noopener noreferrer" class="link-card">' +
+            '<div class="link-inner">' +
+            (block.icon ? '<span class="link-icon">' + escapeHtml(block.icon) + '</span>' : '') +
+            '<div>' +
+            '<div class="link-title">' + escapeHtml(block.title) + '</div>' +
+            (block.desc ? '<div class="link-desc">' + escapeHtml(block.desc) + '</div>' : '') +
+            '</div></div></a>';
+        case 'code':
+          return '<div class="code-wrapper">' +
+            (block.lang ? '<div class="code-lang">' + escapeHtml(block.lang) + '</div>' : '') +
+            '<pre><code>' + escapeHtml(block.c) + '</code></pre></div>';
+        case 'q':
+          return '<blockquote><p>' + formatText(block.c) + '</p>' +
+            (block.src ? '<cite class="quote-source">— ' + escapeHtml(block.src) + '</cite>' : '') +
+            '</blockquote>';
+        case 'list':
+          const tag = block.ordered ? 'ol' : 'ul';
+          // the nodes tree (nesting + task state) takes priority; items[] = fallback
+          const listTree = (block.nodes && block.nodes.length)
+            ? block.nodes
+            : (block.items || []).map(function(c) { return { c: c }; });
+          return renderListNodes(listTree, tag, alignClass);
+        case 'hr':
+          return '<hr>';
+        case 'space':
+          return '<div style="height:' + safeSpacerHeight(block.h) + 'px"></div>';
+        case 'img':
+          if (!block.d) return '';
+          return '<figure><img src="' + escapeHtml(safeImgSrc(block.d)) + '" alt="' + escapeHtml(block.alt || '') + '">' +
+            (block.cap ? '<figcaption>' + escapeHtml(block.cap) + '</figcaption>' : '') + '</figure>';
+        case 'tbl':
+          return '<div class="table-wrapper"><table>' +
+            '<thead><tr>' + (block.headers || []).map(function(h) {
+              return '<th>' + escapeHtml(h) + '</th>';
+            }).join('') + '</tr></thead>' +
+            '<tbody>' + (block.rows || []).map(function(row) {
+              return '<tr>' + row.map(function(cell) {
+                return '<td>' + escapeHtml(cell) + '</td>';
+              }).join('') + '</tr>';
+            }).join('') + '</tbody></table></div>';
+        default:
+          return '';
+      }
+    }
+
+    function renderPage(result) {
+      const { page, verified, signatureInvalid, partialSigned, fingerprint, publicKey } = result;
+      const style = page.style || {};
+      const meta = page.meta || {};
+
+      // The signed title is authoritative at runtime: the static <title>
+      // of the HTML shell is not covered by the signature and can be
+      // spoofed, so sync it from the decoded (and, when signed, verified)
+      // page metadata. Invalid signatures get a loud prefix.
+      if (typeof meta.title === 'string' && meta.title) {
+        document.title = (signatureInvalid ? '⚠ ' : '') + meta.title;
+      } else if (signatureInvalid) {
+        document.title = '⚠ ' + document.title;
+      }
+
+      // Apply theme class to body. ALTWEB is light-first: anything that is not
+      // explicitly 'dark' renders light (adding .theme-light neutralizes the
+      // prefers-color-scheme:dark media queries), so an 'auto'/unset capsule
+      // does NOT flip to dark just because the reader's OS is in dark mode.
+      if (style.theme === 'dark') {
+        document.body.classList.add('theme-dark');
+      } else {
+        document.body.classList.add('theme-light');
+      }
+
+      // Apply custom colors — re-validated against the encoder's hex
+      // pattern: these are the only capsule values reaching a live CSSOM
+      // sink, and the runtime may be handed an envelope that never passed
+      // the encoder's sanitization.
+      const HEX_COLOR = /^#[0-9A-Fa-f]{3,8}$/;
+      if (style.bg && HEX_COLOR.test(style.bg)) document.body.style.backgroundColor = style.bg;
+      if (style.fg && HEX_COLOR.test(style.fg)) document.body.style.color = style.fg;
+
+      // Apply theme-aware accent color
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const accentHex = getAccentHex(style.accent, style.theme || 'auto', prefersDark);
+      document.documentElement.style.setProperty('--accent-color', accentHex);
+
+      // Determine max width class
+      const maxWClass = { sm: 'max-sm', md: 'max-md', lg: 'max-lg', xl: 'max-xl' }[style.maxW] || 'max-md';
+
+      // Determine font class
+      const fontClass = { sans: 'font-sans', serif: 'font-serif', mono: 'font-mono' }[style.font] || 'font-sans';
+
+      let html = '<div class="page-wrapper ' + fontClass + '">';
+
+      // Signature header: three states — verified (green), invalid (red
+      // banner), unsigned (no badge at all).
+      if (verified && fingerprint) {
+        const sigLabel = partialSigned ? T.metaUnsigned : T.verified;
+        html += '<div class="sig-header"><div class="sig-content page-container ' + maxWClass + '">' +
+          '<span>' + sigLabel + '</span>' +
+          '<code class="sig-fingerprint">' + escapeHtml(fingerprint) + '</code>' +
+          (publicKey
+            ? '<details class="sig-key"><summary>' + T.publicKeyLabel + '</summary>' +
+              '<code>' + escapeHtml(publicKey) + '</code></details>'
+            : '') +
+          '</div>' +
+          '<div class="sig-note page-container ' + maxWClass + '">' + T.independentNote + '</div>' +
+          '</div>';
+      } else if (signatureInvalid) {
+        html += '<div class="sig-header sig-invalid"><div class="sig-content page-container ' + maxWClass + '">' +
+          '<span>' + T.invalidSignature + '</span>' +
+          '</div>' +
+          '<div class="sig-note page-container ' + maxWClass + '">' + T.independentNote + '</div>' +
+          '</div>';
+      }
+
+      // Document header (3-column: logo+tagline | title | author+date)
+      const header = meta.header || {};
+      const hasDocHeader = header.logo || header.customText || meta.title || header.showAuthor || header.showDate;
+      if (hasDocHeader) {
+        html += '<div class="doc-header"><div class="page-container ' + maxWClass + '">';
+
+        // Main row: Logo+Tagline | Document Name | Author+Date
+        html += '<div class="doc-header-row">';
+
+        // Left side: logo + tagline
+        html += '<div class="doc-header-left">';
+        if (header.logo) {
+          html += '<img src="' + escapeHtml(safeImgSrc(header.logo)) + '" alt="Logo" class="doc-header-logo">';
+        }
+        if (header.customText) {
+          html += '<span class="doc-header-tagline">' + escapeHtml(header.customText) + '</span>';
+        }
+        html += '</div>';
+
+        // Center: Document name (title)
+        html += '<div class="doc-header-center">';
+        if (meta.title) {
+          html += '<span class="doc-header-title">' + escapeHtml(meta.title) + '</span>';
+        }
+        html += '</div>';
+
+        // Right side: author + date
+        html += '<div class="doc-header-right">';
+        if (header.showAuthor && meta.author) {
+          html += '<span>' + escapeHtml(meta.author) + '</span>';
+        }
+        if (header.showDate && meta.created && isValidDate(meta.created)) {
+          html += '<time datetime="' + new Date(meta.created).toISOString() + '">' +
+            formatTimestamp(meta.created, 'date') + '</time>';
+        }
+        html += '</div>';
+
+        html += '</div>';
+        html += '</div></div>';
+      }
+
+      // Document sub-header (description as foreword - italic)
+      if (meta.description) {
+        html += '<div class="doc-subheader"><div class="page-container ' + maxWClass + '">';
+        html += '<p class="doc-subheader-desc">' + escapeHtml(meta.description) + '</p>';
+        html += '</div></div>';
+      }
+
+      // Main content
+      html += '<main class="page-main"><div class="page-container ' + maxWClass + '">';
+
+      // Page header - fallback for title/author when no doc-header (description is in sub-header)
+      if (!hasDocHeader && (meta.title || meta.author)) {
+        html += '<header class="page-header">';
+        if (meta.title) {
+          html += '<h1 class="page-title">' + escapeHtml(meta.title) + '</h1>';
+        }
+        if (meta.author) {
+          html += '<p class="page-author">' + T.authorPrefix + ' ' + escapeHtml(meta.author) + '</p>';
+        }
+        html += '</header>';
+      }
+
+      // Blocks
+      html += '<article>';
+      (page.blocks || []).forEach(function(block) {
+        html += '<div class="block">' + renderBlock(block) + '</div>';
+      });
+      html += '</article>';
+
+      html += '</div></main>';
+
+      // Document footer (Word-style: copyright + custom | links)
+      const footer = meta.footer || {};
+      const hasDocFooter = footer.copyright || footer.customText || (footer.links && footer.links.length > 0);
+      if (hasDocFooter) {
+        html += '<div class="doc-footer"><div class="page-container ' + maxWClass + '">';
+        html += '<div class="doc-footer-inner">';
+
+        // Left side: copyright + custom text
+        html += '<div class="doc-footer-left">';
+        if (footer.copyright) {
+          html += '<span>' + escapeHtml(footer.copyright) + '</span>';
+        }
+        if (footer.customText) {
+          html += '<span>' + escapeHtml(footer.customText) + '</span>';
+        }
+        html += '</div>';
+
+        // Right side: links
+        if (footer.links && footer.links.length > 0) {
+          html += '<div class="doc-footer-links">';
+          footer.links.forEach(function(link) {
+            html += '<a href="' + escapeHtml(safeHref(link.url)) + '" target="_blank" rel="noopener noreferrer">' +
+              escapeHtml(link.label) + '</a>';
+          });
+          html += '</div>';
+        }
+
+        html += '</div></div></div>';
+      }
+
+      // Footer (powered by + timestamp)
+      const showPoweredBy = footer.poweredBy !== false;
+      html += '<footer class="page-footer"><div class="page-container ' + maxWClass + '">';
+      html += '<div class="footer-content">';
+      if (showPoweredBy) {
+        html += '<span>ALTWEB</span>';
+      }
+
+      // Timestamp display
+      if (style.showTimestamp && style.showTimestamp !== 'none' && meta.modified && isValidDate(meta.modified)) {
+        if (showPoweredBy) {
+          html += '<span class="footer-dot">•</span>';
+        }
+        html += '<time class="footer-timestamp" datetime="' + new Date(meta.modified).toISOString() + '">';
+        html += formatTimestamp(meta.modified, style.showTimestamp);
+        html += '</time>';
+      }
+
+      html += '</div></div></footer>';
+
+      html += '</div>';
+      app.innerHTML = html;
+    }
+
+    async function showPasswordModal() {
+      // Check envelope for signature and visible meta
+      let hasSignature = false;
+      let visibleMeta = null;
+      try {
+        const envelopeBytes = b64urlDecode(DATA);
+        const envelopeJson = new TextDecoder().decode(envelopeBytes);
+        const envelope = JSON.parse(envelopeJson);
+        hasSignature = !!envelope.s;
+        visibleMeta = await getVisibleMeta();
+      } catch (e) {
+        console.error('Error parsing envelope:', e);
+      }
+
+      // Build header HTML based on visible meta
+      let headerHtml;
+      if (visibleMeta && visibleMeta.meta) {
+        const meta = visibleMeta.meta;
+        headerHtml = \`
+          <div class="decrypt-header decrypt-header-meta">
+            <div class="meta-row">
+              <div class="meta-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <div class="meta-info">
+                <h1 class="meta-title">\${escapeHtml(meta.title) || T.encryptedContent}</h1>
+                \${meta.description ? '<p class="meta-desc">' + escapeHtml(meta.description) + '</p>' : ''}
+                \${meta.author ? '<p class="meta-author">' + T.authorPrefix + ' ' + escapeHtml(meta.author) + '</p>' : ''}
+              </div>
+            </div>
+          </div>
+        \`;
+      } else {
+        headerHtml = \`
+          <div class="decrypt-header">
+            <div class="decrypt-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <h1 class="decrypt-title">\${T.encryptedContent}</h1>
+            <p class="decrypt-subtitle">\${T.enterPassword}</p>
+          </div>
+        \`;
+      }
+
+      app.innerHTML = \`
+        <div class="decrypt-screen">
+          <div class="decrypt-container">
+            <div class="decrypt-card">
+              \${headerHtml}
+
+              <form class="decrypt-form" id="decrypt-form">
+                <div>
+                  <label class="form-label">\${T.passwordLabel}</label>
+                  <div class="input-wrapper">
+                    <input
+                      type="password"
+                      id="password"
+                      class="decrypt-input"
+                      placeholder="\${T.passwordPlaceholder}"
+                      autofocus
+                    >
+                    <button type="button" id="toggle-pwd" class="toggle-password"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+                  </div>
+                </div>
+
+                <div id="error" class="decrypt-error" style="display:none"></div>
+
+                <button type="submit" id="submit" class="decrypt-button">\${T.decrypt}</button>
+              </form>
+
+              \${hasSignature ? \`
+                <div class="decrypt-footer">
+                  <div class="signed-badge">
+                    <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>\${T.signed}</span>
+                  </div>
+                </div>
+              \` : ''}
+            </div>
+
+            <div class="decrypt-branding">
+              <p><strong>ALTWEB</strong> — \${T.branding}</p>
+            </div>
+          </div>
+        </div>
+      \`;
+
+      let showPwd = false;
+      const pwdInput = document.getElementById('password');
+      const toggleBtn = document.getElementById('toggle-pwd');
+
+      toggleBtn.onclick = () => {
+        showPwd = !showPwd;
+        pwdInput.type = showPwd ? 'text' : 'password';
+        toggleBtn.innerHTML = showPwd
+          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+      };
+
+      const submit = async (e) => {
+        if (e) e.preventDefault();
+        const pwd = pwdInput.value;
+        const errEl = document.getElementById('error');
+        const submitBtn = document.getElementById('submit');
+
+        if (!pwd.trim()) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = T.decrypting;
+
+        try {
+          const result = await decodePage(pwd);
+          renderPage(result);
+        } catch (err) {
+          console.error('Decryption error:', err);
+          errEl.textContent = err.message || T.wrongPassword;
+          errEl.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = T.decrypt;
+        }
+      };
+
+      document.getElementById('decrypt-form').onsubmit = submit;
+    }
+
+    async function init() {
+      try {
+        if (IS_ENCRYPTED) {
+          await showPasswordModal();
+        } else {
+          const result = await decodePage();
+          renderPage(result);
+        }
+      } catch (e) {
+        app.innerHTML = '<div class="page-main"><div class="page-container max-md"><p class="error">' + T.error + ': ' + escapeHtml(e.message) + '</p></div></div>';
+      }
+    }
+
+    init();
+  })();
+  `;
+
+  const scriptSrc = `${cspScriptHash(dompurifyScript)} ${cspScriptHash(runtimeScript)}`;
+
   return `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; form-action 'none'; base-uri 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src ${scriptSrc}; font-src data:; form-action 'none'; base-uri 'none';">
   <meta name="altweb-hash" content="${hash}">
   <title>${escapeHtml(title)}</title>
   <style>
@@ -674,720 +1455,9 @@ export function generateStandaloneHTML(options: StandaloneOptions): string {
   </div>
 
   <!-- DOMPurify 3.4.13 - XSS Protection -->
-  <script>
-  /*! @license DOMPurify 3.4.13 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.4.13/LICENSE */
-${DOMPURIFY_CODE}
-  </script>
+  <script>${dompurifyScript}</script>
 
-  <script>
-  (function() {
-    const DATA = '${hash}';
-    const IS_ENCRYPTED = ${isEncrypted};
-    const T = ${JSON.stringify(t)};
-    const app = document.getElementById('app');
-
-    // Accent color palette with theme-aware variants
-    const accentColors = {
-      blue: { light: '#2563eb', dark: '#93c5fd' },
-      green: { light: '#059669', dark: '#6ee7b7' },
-      purple: { light: '#7c3aed', dark: '#c4b5fd' },
-      rose: { light: '#e11d48', dark: '#fda4af' },
-      orange: { light: '#ea580c', dark: '#fdba74' },
-      cyan: { light: '#0891b2', dark: '#67e8f9' },
-    };
-
-    function getAccentHex(colorName, theme, prefersDark) {
-      const name = colorName || 'blue';
-      const color = accentColors[name] || accentColors.blue;
-      const isDark = theme === 'dark' || (theme === 'auto' && prefersDark);
-      return isDark ? color.dark : color.light;
-    }
-
-    function b64urlDecode(str) {
-      str = str.replace(/-/g, '+').replace(/_/g, '/');
-      while (str.length % 4) str += '=';
-      const binary = atob(str);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      return bytes;
-    }
-
-    async function deriveKey(password, salt) {
-      const enc = new TextEncoder();
-      const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-      return crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
-        keyMaterial,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['decrypt']
-      );
-    }
-
-    async function decrypt(encrypted, password) {
-      const salt = b64urlDecode(encrypted.salt);
-      const iv = b64urlDecode(encrypted.iv);
-      const ciphertext = b64urlDecode(encrypted.ct);
-      const key = await deriveKey(password, salt);
-      const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
-      return new Uint8Array(decrypted);
-    }
-
-    async function decompress(data) {
-      if (typeof DecompressionStream === 'undefined') {
-        throw new Error(T.incompatibleBrowser);
-      }
-      const ds = new DecompressionStream('deflate');
-      const writer = ds.writable.getWriter();
-      writer.write(data);
-      writer.close();
-      const reader = ds.readable.getReader();
-      const chunks = [];
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-      }
-      const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-      const result = new Uint8Array(totalLength);
-      let offset = 0;
-      for (const chunk of chunks) {
-        result.set(chunk, offset);
-        offset += chunk.length;
-      }
-      return result;
-    }
-
-    // Mirrors the core verify(): ECDSA P-256 / SHA-256, SPKI public key,
-    // raw signature — over the exact compressed bytes that were signed.
-    async function verifySignature(signedBytes, signatureB64, publicKeyB64) {
-      try {
-        const key = await crypto.subtle.importKey(
-          'spki',
-          b64urlDecode(publicKeyB64),
-          { name: 'ECDSA', namedCurve: 'P-256' },
-          false,
-          ['verify']
-        );
-        return await crypto.subtle.verify(
-          { name: 'ECDSA', hash: 'SHA-256' },
-          key,
-          b64urlDecode(signatureB64),
-          signedBytes
-        );
-      } catch (e) {
-        return false;
-      }
-    }
-
-    async function decodePage(password) {
-      const envelopeBytes = b64urlDecode(DATA);
-      const envelopeJson = new TextDecoder().decode(envelopeBytes);
-      const envelope = JSON.parse(envelopeJson);
-
-      let page;
-      // The signature covers the compressed payload bytes; each branch
-      // already holds them — keep them for real verification below.
-      let signedBytes = null;
-
-      if (envelope.enc) {
-        if (!password) throw new Error('Password required');
-
-        // Check for partial encryption (visible meta in envelope.m)
-        if (envelope.m) {
-          // Partial encryption: meta visible, blocks encrypted
-          const metaCompressed = b64urlDecode(envelope.m);
-          const metaBytes = await decompress(metaCompressed);
-          const visibleMeta = JSON.parse(new TextDecoder().decode(metaBytes));
-
-          // Decrypt blocks
-          const blocksCompressed = await decrypt(envelope.e, password);
-          // Partial mode signs meta || blocks, so the visible meta is covered too.
-          signedBytes = new Uint8Array(metaCompressed.length + blocksCompressed.length);
-          signedBytes.set(metaCompressed, 0);
-          signedBytes.set(blocksCompressed, metaCompressed.length);
-          const blocksBytes = await decompress(blocksCompressed);
-          const blocksData = JSON.parse(new TextDecoder().decode(blocksBytes));
-
-          // Merge visible meta with decrypted blocks
-          page = {
-            v: blocksData.v || 1,
-            meta: visibleMeta.meta,
-            style: visibleMeta.style,
-            blocks: blocksData.blocks || [],
-            nav: blocksData.nav,
-            indexHash: blocksData.indexHash,
-          };
-        } else {
-          // Full encryption: everything encrypted
-          const compressed = await decrypt(envelope.e, password);
-          signedBytes = compressed;
-          const jsonBytes = await decompress(compressed);
-          page = JSON.parse(new TextDecoder().decode(jsonBytes));
-        }
-      } else {
-        // Public content
-        const compressed = b64urlDecode(envelope.d);
-        signedBytes = compressed;
-        const jsonBytes = await decompress(compressed);
-        page = JSON.parse(new TextDecoder().decode(jsonBytes));
-      }
-
-      // REAL cryptographic verification — a present-but-invalid signature
-      // must come back loud, never as "verified".
-      const signed = !!(envelope.s && envelope.pk);
-      const verified = signed
-        ? await verifySignature(signedBytes, envelope.s, envelope.pk)
-        : false;
-      const signatureInvalid = signed && !verified;
-      const fingerprint = verified ? await computeFingerprint(envelope.pk) : null;
-
-      return {
-        page,
-        signed,
-        verified,
-        signatureInvalid,
-        // Partial-mode signatures now cover meta || blocks, so the visible
-        // meta (title/description/author) is protected too — no weaker
-        // "meta unsigned" state remains.
-        partialSigned: false,
-        fingerprint,
-        publicKey: verified ? envelope.pk : null,
-      };
-    }
-
-    async function computeFingerprint(publicKeyBase64) {
-      const publicKeyData = b64urlDecode(publicKeyBase64);
-      const hash = await crypto.subtle.digest('SHA-256', publicKeyData);
-      const hashArray = new Uint8Array(hash);
-      // Format: first 8 bytes as hex with colons
-      return Array.from(hashArray.slice(0, 8))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join(':');
-    }
-
-    // Helper to get visible meta from envelope (for password prompt)
-    async function getVisibleMeta() {
-      try {
-        const envelopeBytes = b64urlDecode(DATA);
-        const envelopeJson = new TextDecoder().decode(envelopeBytes);
-        const envelope = JSON.parse(envelopeJson);
-
-        if (envelope.m) {
-          const metaCompressed = b64urlDecode(envelope.m);
-          const metaBytes = await decompress(metaCompressed);
-          return JSON.parse(new TextDecoder().decode(metaBytes));
-        }
-      } catch (e) {
-        console.error('Error getting visible meta:', e);
-      }
-      return null;
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    // URL scheme guards mirror core's sanitize.ts so the standalone path is as
-    // safe as the core path, not just CSP-dependent. encodePage() already
-    // sanitizes at build time; this re-guards at render time because the
-    // runtime decodes whatever hash it is handed, including a hand-crafted
-    // envelope that never went through the encoder.
-    function safeHref(url) {
-      try {
-        var p = new URL(String(url));
-        if (p.protocol === 'http:' || p.protocol === 'https:' || p.protocol === 'mailto:') return url;
-        return '#blocked';
-      } catch (e) {
-        return '#invalid';
-      }
-    }
-    function safeImgSrc(url) {
-      var s = String(url);
-      if (/^data:image\\/(png|jpe?g|gif|webp|svg\\+xml);base64,[A-Za-z0-9+/=]+$/i.test(s)) return s;
-      try {
-        var p = new URL(s);
-        if (p.protocol === 'http:' || p.protocol === 'https:') return s;
-      } catch (e) {}
-      return '';
-    }
-
-    function formatTimestamp(timestamp, mode) {
-      const date = new Date(timestamp);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-
-      if (mode === 'date') {
-        return year + '-' + month + '-' + day;
-      }
-
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes;
-    }
-
-    // Convert inline markdown to HTML
-    // Handles: **bold**, *italic*, __underline__, ~~strike~~, ==highlight==, \`code\`, [link](url)
-    function inlineMarkdownToHtml(text) {
-      if (!text) return '';
-      var html = text;
-      // Escape HTML entities first (but preserve our markdown)
-      html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      // Links [text](url) - do first to avoid interference
-      html = html.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-      // Bold **text** - non-greedy to handle nested/adjacent
-      html = html.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
-      // Italic *text* - non-greedy
-      html = html.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
-      // Underline __text__ - non-greedy
-      html = html.replace(/__(.+?)__/g, '<u>$1</u>');
-      // Strikethrough ~~text~~ - non-greedy
-      html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
-      // Highlight ==text== - non-greedy
-      html = html.replace(/==(.+?)==/g, '<mark>$1</mark>');
-      // Inline code \`text\`
-      html = html.replace(/\`([^\`]+)\`/g, '<code>$1</code>');
-      // Convert newlines to <br>
-      html = html.replace(/\\n/g, '<br>');
-      return html;
-    }
-
-    function formatText(str) {
-      if (!str) return '';
-      // First convert markdown to HTML, then sanitize
-      var html = inlineMarkdownToHtml(str);
-      // Use DOMPurify for secure HTML sanitization
-      // Allow only safe inline formatting tags, no attributes except href on links
-      return DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ['strong', 'b', 'em', 'i', 'code', 'br', 'a', 'u', 's', 'mark', 'sub', 'sup'],
-        ALLOWED_ATTR: ['href', 'target', 'rel'],
-        ALLOW_DATA_ATTR: false,
-        ADD_ATTR: ['target'],
-        FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'svg', 'math'],
-        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
-      });
-    }
-
-    function renderListNodes(nodes, tag, alignClass) {
-      return '<' + tag + (alignClass ? ' class="' + alignClass + '"' : '') + '>' +
-        nodes.map(function(node) {
-          var task = node.task
-            ? '<input type="checkbox" disabled' + (node.done ? ' checked' : '') + '> '
-            : '';
-          var children = (node.children && node.children.length)
-            ? renderListNodes(node.children, tag, '')
-            : '';
-          return '<li' + (node.task ? ' class="task-item"' : '') + '>' +
-            task + formatText(node.c) + children + '</li>';
-        }).join('') +
-        '</' + tag + '>';
-    }
-
-    // Structure fields that land in attribute/tag positions must never reach the
-    // HTML string raw: the runtime decodes whatever envelope it is handed, including
-    // a hand-crafted one that never passed the encoder's schema pass. Allowlist /
-    // coerce them here (align, heading level, spacer height) so a fabricated block
-    // cannot break out of its attribute and inject an event handler.
-    const SAFE_ALIGN = { left: 1, center: 1, right: 1, justify: 1 };
-    function alignClassOf(block) {
-      // hasOwnProperty so inherited keys (toString/constructor/__proto__) never
-      // match — the guard must be an allowlist, not a truthy prototype lookup.
-      return (block.align && Object.prototype.hasOwnProperty.call(SAFE_ALIGN, block.align))
-        ? ' text-' + block.align : '';
-    }
-    function safeLevel(l) {
-      const n = parseInt(l, 10);
-      return (n >= 1 && n <= 6) ? n : 2;
-    }
-    function safeSpacerHeight(h) {
-      const n = parseInt(h, 10);
-      return (n >= 0 && n <= 400) ? n : 40;
-    }
-
-    function renderBlock(block) {
-      const alignClass = alignClassOf(block);
-
-      switch(block.t) {
-        case 'h':
-          const level = safeLevel(block.l);
-          return '<h' + level + ' class="' + alignClass + '">' + formatText(block.c) + '</h' + level + '>';
-        case 'p':
-          return '<p class="' + alignClass + '">' + formatText(block.c) + '</p>';
-        case 'a':
-          return '<a href="' + escapeHtml(safeHref(block.url)) + '" target="_blank" rel="noopener noreferrer" class="link-card">' +
-            '<div class="link-inner">' +
-            (block.icon ? '<span class="link-icon">' + escapeHtml(block.icon) + '</span>' : '') +
-            '<div>' +
-            '<div class="link-title">' + escapeHtml(block.title) + '</div>' +
-            (block.desc ? '<div class="link-desc">' + escapeHtml(block.desc) + '</div>' : '') +
-            '</div></div></a>';
-        case 'code':
-          return '<div class="code-wrapper">' +
-            (block.lang ? '<div class="code-lang">' + escapeHtml(block.lang) + '</div>' : '') +
-            '<pre><code>' + escapeHtml(block.c) + '</code></pre></div>';
-        case 'q':
-          return '<blockquote><p>' + formatText(block.c) + '</p>' +
-            (block.src ? '<cite class="quote-source">— ' + escapeHtml(block.src) + '</cite>' : '') +
-            '</blockquote>';
-        case 'list':
-          const tag = block.ordered ? 'ol' : 'ul';
-          // the nodes tree (nesting + task state) takes priority; items[] = fallback
-          const listTree = (block.nodes && block.nodes.length)
-            ? block.nodes
-            : (block.items || []).map(function(c) { return { c: c }; });
-          return renderListNodes(listTree, tag, alignClass);
-        case 'hr':
-          return '<hr>';
-        case 'space':
-          return '<div style="height:' + safeSpacerHeight(block.h) + 'px"></div>';
-        case 'img':
-          if (!block.d) return '';
-          return '<figure><img src="' + escapeHtml(safeImgSrc(block.d)) + '" alt="' + escapeHtml(block.alt || '') + '">' +
-            (block.cap ? '<figcaption>' + escapeHtml(block.cap) + '</figcaption>' : '') + '</figure>';
-        case 'tbl':
-          return '<div class="table-wrapper"><table>' +
-            '<thead><tr>' + (block.headers || []).map(function(h) {
-              return '<th>' + escapeHtml(h) + '</th>';
-            }).join('') + '</tr></thead>' +
-            '<tbody>' + (block.rows || []).map(function(row) {
-              return '<tr>' + row.map(function(cell) {
-                return '<td>' + escapeHtml(cell) + '</td>';
-              }).join('') + '</tr>';
-            }).join('') + '</tbody></table></div>';
-        default:
-          return '';
-      }
-    }
-
-    function renderPage(result) {
-      const { page, verified, signatureInvalid, partialSigned, fingerprint, publicKey } = result;
-      const style = page.style || {};
-      const meta = page.meta || {};
-
-      // The signed title is authoritative at runtime: the static <title>
-      // of the HTML shell is not covered by the signature and can be
-      // spoofed, so sync it from the decoded (and, when signed, verified)
-      // page metadata. Invalid signatures get a loud prefix.
-      if (typeof meta.title === 'string' && meta.title) {
-        document.title = (signatureInvalid ? '⚠ ' : '') + meta.title;
-      } else if (signatureInvalid) {
-        document.title = '⚠ ' + document.title;
-      }
-
-      // Apply theme class to body. ALTWEB is light-first: anything that is not
-      // explicitly 'dark' renders light (adding .theme-light neutralizes the
-      // prefers-color-scheme:dark media queries), so an 'auto'/unset capsule
-      // does NOT flip to dark just because the reader's OS is in dark mode.
-      if (style.theme === 'dark') {
-        document.body.classList.add('theme-dark');
-      } else {
-        document.body.classList.add('theme-light');
-      }
-
-      // Apply custom colors
-      if (style.bg) document.body.style.backgroundColor = style.bg;
-      if (style.fg) document.body.style.color = style.fg;
-
-      // Apply theme-aware accent color
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const accentHex = getAccentHex(style.accent, style.theme || 'auto', prefersDark);
-      document.documentElement.style.setProperty('--accent-color', accentHex);
-
-      // Determine max width class
-      const maxWClass = { sm: 'max-sm', md: 'max-md', lg: 'max-lg', xl: 'max-xl' }[style.maxW] || 'max-md';
-
-      // Determine font class
-      const fontClass = { sans: 'font-sans', serif: 'font-serif', mono: 'font-mono' }[style.font] || 'font-sans';
-
-      let html = '<div class="page-wrapper ' + fontClass + '">';
-
-      // Signature header: three states — verified (green), invalid (red
-      // banner), unsigned (no badge at all).
-      if (verified && fingerprint) {
-        const sigLabel = partialSigned ? T.metaUnsigned : T.verified;
-        html += '<div class="sig-header"><div class="sig-content page-container ' + maxWClass + '">' +
-          '<span>' + sigLabel + '</span>' +
-          '<code class="sig-fingerprint">' + escapeHtml(fingerprint) + '</code>' +
-          (publicKey
-            ? '<details class="sig-key"><summary>' + T.publicKeyLabel + '</summary>' +
-              '<code>' + escapeHtml(publicKey) + '</code></details>'
-            : '') +
-          '</div>' +
-          '<div class="sig-note page-container ' + maxWClass + '">' + T.independentNote + '</div>' +
-          '</div>';
-      } else if (signatureInvalid) {
-        html += '<div class="sig-header sig-invalid"><div class="sig-content page-container ' + maxWClass + '">' +
-          '<span>' + T.invalidSignature + '</span>' +
-          '</div>' +
-          '<div class="sig-note page-container ' + maxWClass + '">' + T.independentNote + '</div>' +
-          '</div>';
-      }
-
-      // Document header (3-column: logo+tagline | title | author+date)
-      const header = meta.header || {};
-      const hasDocHeader = header.logo || header.customText || meta.title || header.showAuthor || header.showDate;
-      if (hasDocHeader) {
-        html += '<div class="doc-header"><div class="page-container ' + maxWClass + '">';
-
-        // Main row: Logo+Tagline | Document Name | Author+Date
-        html += '<div class="doc-header-row">';
-
-        // Left side: logo + tagline
-        html += '<div class="doc-header-left">';
-        if (header.logo) {
-          html += '<img src="' + escapeHtml(safeImgSrc(header.logo)) + '" alt="Logo" class="doc-header-logo">';
-        }
-        if (header.customText) {
-          html += '<span class="doc-header-tagline">' + escapeHtml(header.customText) + '</span>';
-        }
-        html += '</div>';
-
-        // Center: Document name (title)
-        html += '<div class="doc-header-center">';
-        if (meta.title) {
-          html += '<span class="doc-header-title">' + escapeHtml(meta.title) + '</span>';
-        }
-        html += '</div>';
-
-        // Right side: author + date
-        html += '<div class="doc-header-right">';
-        if (header.showAuthor && meta.author) {
-          html += '<span>' + escapeHtml(meta.author) + '</span>';
-        }
-        if (header.showDate && meta.created) {
-          html += '<time datetime="' + new Date(meta.created).toISOString() + '">' +
-            formatTimestamp(meta.created, 'date') + '</time>';
-        }
-        html += '</div>';
-
-        html += '</div>';
-        html += '</div></div>';
-      }
-
-      // Document sub-header (description as foreword - italic)
-      if (meta.description) {
-        html += '<div class="doc-subheader"><div class="page-container ' + maxWClass + '">';
-        html += '<p class="doc-subheader-desc">' + escapeHtml(meta.description) + '</p>';
-        html += '</div></div>';
-      }
-
-      // Main content
-      html += '<main class="page-main"><div class="page-container ' + maxWClass + '">';
-
-      // Page header - fallback for title/author when no doc-header (description is in sub-header)
-      if (!hasDocHeader && (meta.title || meta.author)) {
-        html += '<header class="page-header">';
-        if (meta.title) {
-          html += '<h1 class="page-title">' + escapeHtml(meta.title) + '</h1>';
-        }
-        if (meta.author) {
-          html += '<p class="page-author">' + T.authorPrefix + ' ' + escapeHtml(meta.author) + '</p>';
-        }
-        html += '</header>';
-      }
-
-      // Blocks
-      html += '<article>';
-      (page.blocks || []).forEach(function(block) {
-        html += '<div class="block">' + renderBlock(block) + '</div>';
-      });
-      html += '</article>';
-
-      html += '</div></main>';
-
-      // Document footer (Word-style: copyright + custom | links)
-      const footer = meta.footer || {};
-      const hasDocFooter = footer.copyright || footer.customText || (footer.links && footer.links.length > 0);
-      if (hasDocFooter) {
-        html += '<div class="doc-footer"><div class="page-container ' + maxWClass + '">';
-        html += '<div class="doc-footer-inner">';
-
-        // Left side: copyright + custom text
-        html += '<div class="doc-footer-left">';
-        if (footer.copyright) {
-          html += '<span>' + escapeHtml(footer.copyright) + '</span>';
-        }
-        if (footer.customText) {
-          html += '<span>' + escapeHtml(footer.customText) + '</span>';
-        }
-        html += '</div>';
-
-        // Right side: links
-        if (footer.links && footer.links.length > 0) {
-          html += '<div class="doc-footer-links">';
-          footer.links.forEach(function(link) {
-            html += '<a href="' + escapeHtml(safeHref(link.url)) + '" target="_blank" rel="noopener noreferrer">' +
-              escapeHtml(link.label) + '</a>';
-          });
-          html += '</div>';
-        }
-
-        html += '</div></div></div>';
-      }
-
-      // Footer (powered by + timestamp)
-      const showPoweredBy = footer.poweredBy !== false;
-      html += '<footer class="page-footer"><div class="page-container ' + maxWClass + '">';
-      html += '<div class="footer-content">';
-      if (showPoweredBy) {
-        html += '<span>ALTWEB</span>';
-      }
-
-      // Timestamp display
-      if (style.showTimestamp && style.showTimestamp !== 'none' && meta.modified) {
-        if (showPoweredBy) {
-          html += '<span class="footer-dot">•</span>';
-        }
-        html += '<time class="footer-timestamp" datetime="' + new Date(meta.modified).toISOString() + '">';
-        html += formatTimestamp(meta.modified, style.showTimestamp);
-        html += '</time>';
-      }
-
-      html += '</div></div></footer>';
-
-      html += '</div>';
-      app.innerHTML = html;
-    }
-
-    async function showPasswordModal() {
-      // Check envelope for signature and visible meta
-      let hasSignature = false;
-      let visibleMeta = null;
-      try {
-        const envelopeBytes = b64urlDecode(DATA);
-        const envelopeJson = new TextDecoder().decode(envelopeBytes);
-        const envelope = JSON.parse(envelopeJson);
-        hasSignature = !!envelope.s;
-        visibleMeta = await getVisibleMeta();
-      } catch (e) {
-        console.error('Error parsing envelope:', e);
-      }
-
-      // Build header HTML based on visible meta
-      let headerHtml;
-      if (visibleMeta && visibleMeta.meta) {
-        const meta = visibleMeta.meta;
-        headerHtml = \`
-          <div class="decrypt-header decrypt-header-meta">
-            <div class="meta-row">
-              <div class="meta-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-              <div class="meta-info">
-                <h1 class="meta-title">\${escapeHtml(meta.title) || T.encryptedContent}</h1>
-                \${meta.description ? '<p class="meta-desc">' + escapeHtml(meta.description) + '</p>' : ''}
-                \${meta.author ? '<p class="meta-author">' + T.authorPrefix + ' ' + escapeHtml(meta.author) + '</p>' : ''}
-              </div>
-            </div>
-          </div>
-        \`;
-      } else {
-        headerHtml = \`
-          <div class="decrypt-header">
-            <div class="decrypt-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-            <h1 class="decrypt-title">\${T.encryptedContent}</h1>
-            <p class="decrypt-subtitle">\${T.enterPassword}</p>
-          </div>
-        \`;
-      }
-
-      app.innerHTML = \`
-        <div class="decrypt-screen">
-          <div class="decrypt-container">
-            <div class="decrypt-card">
-              \${headerHtml}
-
-              <form class="decrypt-form" id="decrypt-form">
-                <div>
-                  <label class="form-label">\${T.passwordLabel}</label>
-                  <div class="input-wrapper">
-                    <input
-                      type="password"
-                      id="password"
-                      class="decrypt-input"
-                      placeholder="\${T.passwordPlaceholder}"
-                      autofocus
-                    >
-                    <button type="button" id="toggle-pwd" class="toggle-password"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
-                  </div>
-                </div>
-
-                <div id="error" class="decrypt-error" style="display:none"></div>
-
-                <button type="submit" id="submit" class="decrypt-button">\${T.decrypt}</button>
-              </form>
-
-              \${hasSignature ? \`
-                <div class="decrypt-footer">
-                  <div class="signed-badge">
-                    <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span>\${T.signed}</span>
-                  </div>
-                </div>
-              \` : ''}
-            </div>
-
-            <div class="decrypt-branding">
-              <p><strong>ALTWEB</strong> — \${T.branding}</p>
-            </div>
-          </div>
-        </div>
-      \`;
-
-      let showPwd = false;
-      const pwdInput = document.getElementById('password');
-      const toggleBtn = document.getElementById('toggle-pwd');
-
-      toggleBtn.onclick = () => {
-        showPwd = !showPwd;
-        pwdInput.type = showPwd ? 'text' : 'password';
-        toggleBtn.innerHTML = showPwd
-          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
-          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-      };
-
-      const submit = async (e) => {
-        if (e) e.preventDefault();
-        const pwd = pwdInput.value;
-        const errEl = document.getElementById('error');
-        const submitBtn = document.getElementById('submit');
-
-        if (!pwd.trim()) return;
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = T.decrypting;
-
-        try {
-          const result = await decodePage(pwd);
-          renderPage(result);
-        } catch (err) {
-          console.error('Decryption error:', err);
-          errEl.textContent = err.message || T.wrongPassword;
-          errEl.style.display = 'block';
-          submitBtn.disabled = false;
-          submitBtn.textContent = T.decrypt;
-        }
-      };
-
-      document.getElementById('decrypt-form').onsubmit = submit;
-    }
-
-    async function init() {
-      try {
-        if (IS_ENCRYPTED) {
-          await showPasswordModal();
-        } else {
-          const result = await decodePage();
-          renderPage(result);
-        }
-      } catch (e) {
-        app.innerHTML = '<div class="page-main"><div class="page-container max-md"><p class="error">' + T.error + ': ' + escapeHtml(e.message) + '</p></div></div>';
-      }
-    }
-
-    init();
-  })();
-  </script>
+  <script>${runtimeScript}</script>
 </body>
 </html>`;
 }

@@ -4,6 +4,49 @@
  */
 
 /**
+ * Wrap maximal runs of consecutive <li>…</li> (each optionally followed by a
+ * newline) in a single <ul>. Linear replacement for
+ * /(<li>[\s\S]*?<\/li>\n?)+/g, whose nested quantifier backtracks
+ * quadratically on adversarial input (~586 KB → ~10 s freeze).
+ */
+function wrapListItems(html: string): string {
+  let out = '';
+  let i = 0;
+  // indexOf returning -1 is permanent for later positions — remember it so a
+  // run of unterminated '<li>'s cannot re-scan the tail once per item.
+  let noMoreClose = false;
+  while (i < html.length) {
+    const start = html.indexOf('<li>', i);
+    if (start === -1) {
+      out += html.slice(i);
+      break;
+    }
+    out += html.slice(i, start);
+    let j = start;
+    let run = '';
+    while (html.startsWith('<li>', j)) {
+      const close = noMoreClose ? -1 : html.indexOf('</li>', j + 4);
+      if (close === -1) {
+        noMoreClose = true;
+        break;
+      }
+      let end = close + 5;
+      if (html.charCodeAt(end) === 10 /* \n */) end++;
+      run += html.slice(j, end);
+      j = end;
+    }
+    if (run) {
+      out += `<ul>${run}</ul>`;
+      i = j;
+    } else {
+      out += '<li>';
+      i = start + 4;
+    }
+  }
+  return out;
+}
+
+/**
  * Convert Markdown text to HTML
  * Supports: headings, bold, italic, strikethrough, code, links, lists, blockquotes, hr, images
  */
@@ -73,9 +116,7 @@ export function markdownToHtml(markdown: string): string {
 
   // Wrap consecutive <li> in <ul> or <ol>
   // This is a simplified approach - wraps all li in ul
-  html = html.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, (match) => {
-    return `<ul>${match}</ul>`;
-  });
+  html = wrapListItems(html);
 
   // Task lists (- [ ] or - [x])
   html = html.replace(/<li>\[ \]\s*/g, '<li><input type="checkbox" disabled> ');

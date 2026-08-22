@@ -28,7 +28,7 @@ describe('inspectArtifact (no DOM)', () => {
   });
 
   it('public signed: verified=true + fingerprint', async () => {
-    const identity = await deriveIdentityFromPassphrase('test-inspect-identity');
+    const identity = await deriveIdentityFromPassphrase('test-inspect-identity-vector');
     const hash = await encodePage(page, { signingKeyPair: identity.keyPair });
     const info = await inspectArtifact(hash);
     expect(info.signed).toBe(true);
@@ -37,7 +37,7 @@ describe('inspectArtifact (no DOM)', () => {
   });
 
   it('forged signature: verified=false, no fingerprint', async () => {
-    const identity = await deriveIdentityFromPassphrase('test-inspect-identity');
+    const identity = await deriveIdentityFromPassphrase('test-inspect-identity-vector');
     const hash = await encodePage(page, { signingKeyPair: identity.keyPair });
     // tamper with the public payload d, keeping the signature
     const envelope = JSON.parse(Buffer.from(hash.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
@@ -53,7 +53,7 @@ describe('inspectArtifact (no DOM)', () => {
   });
 
   it('fully encrypted: verified=null (unverifiable without the password)', async () => {
-    const identity = await deriveIdentityFromPassphrase('test-inspect-identity');
+    const identity = await deriveIdentityFromPassphrase('test-inspect-identity-vector');
     const hash = await encodePage(page, {
       password: 'test-password',
       signingKeyPair: identity.keyPair,

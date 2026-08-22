@@ -13,7 +13,7 @@ import type { PayloadEnvelope } from '../types/crypto';
 import { base64urlDecode } from '../crypto/encoding';
 import { verify, computeFingerprint } from '../crypto/signing';
 import { decompress } from '../compression';
-import { ValidationError } from './decoder';
+import { ValidationError, MAX_ENVELOPE_CHARS } from './decoder';
 
 export interface ArtifactInfo {
   encrypted: boolean;
@@ -28,6 +28,9 @@ export interface ArtifactInfo {
 }
 
 export async function inspectArtifact(hash: string): Promise<ArtifactInfo> {
+  if (hash.length > MAX_ENVELOPE_CHARS) {
+    throw new ValidationError('Invalid artifact format');
+  }
   let envelope: PayloadEnvelope;
   try {
     envelope = JSON.parse(new TextDecoder().decode(base64urlDecode(hash)));

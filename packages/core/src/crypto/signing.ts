@@ -4,10 +4,39 @@
  * key => same signature bytes, so signed capsule builds are byte-reproducible.
  * Verification stays on the native Web Crypto API and accepts both
  * deterministic and legacy random-k signatures (ECDSA verify is agnostic).
+ *
+ * Verification additionally REJECTS high-s (malleated) signatures: for any
+ * ECDSA signature (r, s), (r, n - s) also verifies, so without this check two
+ * distinct valid envelopes exist per signature. That does not break
+ * authenticity, but it breaks every property built on "one content + one key
+ * = one capsule byte-identity": byte-reproducibility, dedup-by-signature,
+ * and provenance chaining over capsule hashes (SPEC §6.5), where a third
+ * party could fork a chain without holding any key. The signer (noble)
+ * always emits canonical low-s, so legitimate capsules are unaffected.
  */
 
 import { p256 } from '@noble/curves/nist.js';
 import { base64urlEncode, base64urlDecode } from './encoding';
+
+/** P-256 group order n (a fixed domain parameter). */
+const P256_N = BigInt(
+  '0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'
+);
+const P256_HALF_N = P256_N >> 1n;
+
+/**
+ * True when the signature's s component is in the canonical low half
+ * [1, n/2]. Layouts other than IEEE P1363 r||s (64 bytes) are passed
+ * through — Web Crypto rejects them on its own.
+ */
+function isLowS(signature: Uint8Array): boolean {
+  if (signature.length !== 64) return true;
+  let s = 0n;
+  for (let i = 32; i < 64; i++) {
+    s = (s << 8n) | BigInt(signature[i]);
+  }
+  return s <= P256_HALF_N;
+}
 
 export async function generateSigningKeyPair(): Promise<CryptoKeyPair> {
   return crypto.subtle.generateKey(
@@ -55,6 +84,10 @@ export async function verify(
   try {
     const signature = base64urlDecode(signatureBase64);
     const publicKeyData = base64urlDecode(publicKeyBase64);
+
+    if (!isLowS(signature)) {
+      return false;
+    }
 
     const publicKey = await crypto.subtle.importKey(
       'spki',

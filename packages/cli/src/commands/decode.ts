@@ -8,6 +8,7 @@ import {
   isEncryptedContent,
 } from '@altweb/core';
 import { resolveHash } from '../artifact';
+import { forStdout } from '../tty';
 
 export async function decodeCommand(argv: string[]): Promise<number> {
   const { values, positionals } = parseArgs({
@@ -35,14 +36,19 @@ export async function decodeCommand(argv: string[]): Promise<number> {
   const result = await decodePage(hash, values.password);
 
   if (values.to === 'json') {
+    // JSON.stringify escapes control bytes, so this is TTY-safe as-is.
     process.stdout.write(JSON.stringify(result.page, null, 2) + '\n');
   } else {
+    // Markdown is DATA when piped (byte-faithful) but gets terminal-escape
+    // stripping when stdout is an interactive terminal.
     process.stdout.write(
-      serializeToMarkdownWithMeta(result.page.blocks, {
-        title: result.page.meta.title,
-        description: result.page.meta.description,
-        author: result.page.meta.author,
-      }) + '\n'
+      forStdout(
+        serializeToMarkdownWithMeta(result.page.blocks, {
+          title: result.page.meta.title,
+          description: result.page.meta.description,
+          author: result.page.meta.author,
+        })
+      ) + '\n'
     );
   }
   return 0;

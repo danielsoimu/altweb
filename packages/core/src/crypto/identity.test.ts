@@ -47,15 +47,15 @@ describe('Identity - Deterministic Key Derivation', () => {
   });
 
   it('derives different keypairs from different passphrases', async () => {
-    const identity1 = await deriveIdentityFromPassphrase('passphrase-one');
-    const identity2 = await deriveIdentityFromPassphrase('passphrase-two');
+    const identity1 = await deriveIdentityFromPassphrase('passphrase-number-one-vector');
+    const identity2 = await deriveIdentityFromPassphrase('passphrase-number-two-vector');
 
     expect(identity1.fingerprint).not.toBe(identity2.fingerprint);
     expect(identity1.publicKeyBase64).not.toBe(identity2.publicKeyBase64);
   });
 
   it('produces valid signing keypair', async () => {
-    const passphrase = 'signing-test-passphrase';
+    const passphrase = 'signing-test-passphrase-vector';
     const identity = await deriveIdentityFromPassphrase(passphrase);
 
     const message = new TextEncoder().encode('Hello, ALTWEB!');
@@ -69,8 +69,8 @@ describe('Identity - Deterministic Key Derivation', () => {
   });
 
   it('verification fails with wrong public key', async () => {
-    const identity1 = await deriveIdentityFromPassphrase('passphrase-one');
-    const identity2 = await deriveIdentityFromPassphrase('passphrase-two');
+    const identity1 = await deriveIdentityFromPassphrase('passphrase-number-one-vector');
+    const identity2 = await deriveIdentityFromPassphrase('passphrase-number-two-vector');
 
     const message = new TextEncoder().encode('Signed by identity1');
     const signature = await sign(message, identity1.keyPair.privateKey);
@@ -81,7 +81,7 @@ describe('Identity - Deterministic Key Derivation', () => {
   });
 
   it('fingerprint has correct format', async () => {
-    const identity = await deriveIdentityFromPassphrase('fingerprint-test');
+    const identity = await deriveIdentityFromPassphrase('fingerprint-format-test-vector');
 
     // Fingerprint should be 8 hex bytes separated by colons
     // Format: xx:xx:xx:xx:xx:xx:xx:xx (23 chars)

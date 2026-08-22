@@ -46,23 +46,82 @@ function isPrivateV4(addr: string): boolean {
   );
 }
 
-export function isPrivateAddress(addr: string): boolean {
-  const lower = addr.toLowerCase();
-  // v4-mapped IPv6 (::ffff:a.b.c.d): judge the embedded v4 — public stays
-  // public, private stays refused. A ::ffff:-shaped address that does not
-  // carry a v4 is refused outright.
-  if (lower.startsWith('::ffff:')) {
-    const embedded = lower.slice(7);
-    return isIP(embedded) === 4 ? isPrivateV4(embedded) : true;
+/**
+ * Parse an IPv6 textual address into its 8 hextets, handling '::'
+ * compression and a trailing embedded dotted-quad. Returns null when the
+ * text is not a well-formed IPv6 address.
+ *
+ * The checks below run on NUMERIC values, not string prefixes: an IP-literal
+ * URL never touches DNS (so guardedLookup cannot normalize it), and textual
+ * variants like '0:0:0:0:0:0:0:1' or '0064:ff9b::1' would sail past any
+ * startsWith() comparison.
+ */
+function parseHextets(addr: string): number[] | null {
+  let s = addr;
+  // Trailing dotted-quad (e.g. ::ffff:127.0.0.1 or 64:ff9b::10.0.0.1)
+  const lastColon = s.lastIndexOf(':');
+  const tail = s.slice(lastColon + 1);
+  if (tail.includes('.')) {
+    if (isIP(tail) !== 4) return null;
+    const [a, b, c, d] = tail.split('.').map(Number);
+    s =
+      s.slice(0, lastColon + 1) +
+      ((a << 8) | b).toString(16) +
+      ':' +
+      ((c << 8) | d).toString(16);
   }
+  const doubleColons = s.split('::');
+  if (doubleColons.length > 2) return null;
+  const parseGroups = (part: string): number[] | null => {
+    if (part === '') return [];
+    const groups: number[] = [];
+    for (const g of part.split(':')) {
+      if (!/^[0-9a-fA-F]{1,4}$/.test(g)) return null;
+      groups.push(parseInt(g, 16));
+    }
+    return groups;
+  };
+  const head = parseGroups(doubleColons[0]);
+  const tailGroups = doubleColons.length === 2 ? parseGroups(doubleColons[1]) : [];
+  if (head === null || tailGroups === null) return null;
+  if (doubleColons.length === 2) {
+    const fill = 8 - head.length - tailGroups.length;
+    if (fill < 1) return null;
+    return [...head, ...new Array(fill).fill(0), ...tailGroups];
+  }
+  return head.length === 8 ? head : null;
+}
+
+function embeddedV4(hi: number, lo: number): string {
+  return `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`;
+}
+
+export function isPrivateAddress(addr: string): boolean {
   if (isIP(addr) === 4) return isPrivateV4(addr);
-  return (
-    lower === '::1' ||
-    lower === '::' ||
-    lower.startsWith('fe80:') || // link-local
-    lower.startsWith('fc') || // ULA fc00::/7
-    lower.startsWith('fd')
-  );
+
+  const h = parseHextets(addr);
+  // Anything v6-shaped that we cannot parse is refused (fail closed).
+  if (h === null) return true;
+
+  // Unspecified (::), loopback (::1), and the whole reserved ::/96 —
+  // including deprecated IPv4-compatible forms like ::127.0.0.1 (fail closed).
+  if (h.slice(0, 6).every((x) => x === 0)) return true;
+  // v4-mapped ::ffff:0:0/96 — judge the embedded v4
+  if (h.slice(0, 5).every((x) => x === 0) && h[5] === 0xffff) {
+    return isPrivateV4(embeddedV4(h[6], h[7]));
+  }
+  // Link-local fe80::/10
+  if ((h[0] & 0xffc0) === 0xfe80) return true;
+  // ULA fc00::/7
+  if ((h[0] & 0xfe00) === 0xfc00) return true;
+  // NAT64 well-known prefix 64:ff9b::/96 — a v4 reached through a
+  // translator; the embedded target may be internal, refuse outright.
+  if (h[0] === 0x0064 && h[1] === 0xff9b) return true;
+  // 6to4 2002::/16 — embeds a v4 the same way; archaic for capsule
+  // hosting, refuse outright.
+  if (h[0] === 0x2002) return true;
+
+  return false;
 }
 
 type LookupCallback = (

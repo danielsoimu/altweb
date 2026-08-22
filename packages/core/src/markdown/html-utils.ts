@@ -19,11 +19,37 @@ export function decodeHtmlEntities(text: string): string {
   return text.replace(/&(?:amp|lt|gt|quot|#39|apos|nbsp);/g, match => HTML_ENTITIES[match] || match);
 }
 
+/**
+ * Remove every <...> tag span in a single linear pass. Equivalent to
+ * replace(/<[^>]*>/g, ''), which is quadratic on adversarial input (each of
+ * N '<'s rescans to the end looking for '>'): ~195 KB of '<' froze the
+ * thread for ~14 s through the public parseMarkdown path.
+ */
+export function stripTags(html: string): string {
+  let out = '';
+  let i = 0;
+  while (i < html.length) {
+    const lt = html.indexOf('<', i);
+    if (lt === -1) {
+      out += html.slice(i);
+      break;
+    }
+    out += html.slice(i, lt);
+    const gt = html.indexOf('>', lt + 1);
+    if (gt === -1) {
+      // Unterminated tag: the regex would leave it untouched — keep parity.
+      out += html.slice(lt);
+      break;
+    }
+    i = gt + 1;
+  }
+  return out;
+}
+
 /** Strip all HTML tags and decode entities to get plain text. */
 export function stripHtml(html: string): string {
   if (!html) return '';
-  const stripped = html.replace(/<[^>]*>/g, '');
-  return decodeHtmlEntities(stripped);
+  return decodeHtmlEntities(stripTags(html));
 }
 
 /**
@@ -42,8 +68,8 @@ export function htmlToMarkdown(html: string): string {
   md = md.replace(/<code>(.*?)<\/code>/gi, '`$1`');
   // Links: <a href="url">text</a> → [text](url)
   md = md.replace(/<a\s+href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
-  // Remove any remaining HTML tags
-  md = md.replace(/<[^>]*>/g, '');
+  // Remove any remaining HTML tags (linear pass, see stripTags)
+  md = stripTags(md);
 
   return decodeHtmlEntities(md);
 }
