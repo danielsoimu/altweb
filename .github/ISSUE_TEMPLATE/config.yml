@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability (private)
+    url: https://github.com/danielsoimu/altweb/security/advisories/new
+    about: Please do NOT report exploitable issues publicly. Use private reporting - see SECURITY.md.
+  - name: Documentation & spec
+    url: https://altweb.software
+    about: Format spec, MCP loader docs, and the live demo capsule.
