@@ -50,7 +50,7 @@ Only the latest release line receives security fixes.
 | Version | Supported |
 | ------- | --------- |
 | 1.1.x   | yes       |
-| < 1.1   | no — upgrade; 1.1.0 contains the remediation of a full-surface audit |
+| < 1.1   | no — upgrade; [1.1.0](https://github.com/danielsoimu/altweb/releases/tag/v1.1.0) contains the remediation of a full-surface security audit |
 
 ## Verification, not trust
 
