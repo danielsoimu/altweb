@@ -140,6 +140,17 @@ export default defineConfig({
 				{ tag: 'meta', attrs: { name: 'twitter:image', content: `${SITE}/og-image.png` } },
 				// Structured data for rich results.
 				{ tag: 'script', attrs: { type: 'application/ld+json' }, content: JSON_LD },
+				// Self-hosted, cookieless analytics (Umami) — DOCS SITE ONLY, and
+				// disclosed in the footer. The editor, capsules, CLI, and MCP loader
+				// ship zero telemetry; that claim is load-bearing, keep it true.
+				{
+					tag: 'script',
+					attrs: {
+						defer: true,
+						src: 'https://analytics.altweb.software/script.js',
+						'data-website-id': 'dd7351a0-e404-4ee0-8f65-6c52e838e7e7',
+					},
+				},
 			],
 			social: [
 				{
