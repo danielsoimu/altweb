@@ -19,6 +19,8 @@
     "apps/*"
   ],
   "scripts": {
+    "dev": "npm run dev -w @altweb/editor",
+    "keygen": "npm run build -w altweb && node packages/cli/dist/altweb.mjs keygen --save",
     "test": "npm run test:run -w @altweb/core && npm run test:run -w altweb-context && npm run test:run -w @altweb/editor",
     "test:run": "npm run test:run -w @altweb/core && npm run test:run -w altweb-context && npm run test:run -w @altweb/editor",
     "typecheck": "npm run typecheck --workspaces --if-present",

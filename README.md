@@ -40,7 +40,8 @@ agent asks for context ──► altweb-context ──► verify signature + tru
 
 ## Quickstart
 
-Both tools are on npm — nothing to clone:
+Both tools are on npm — nothing to clone. Run these commands outside a source
+checkout (inside this repository, npm resolves the local workspace package):
 
 ```bash
 # create your signing identity (deterministic from a passphrase; only the
@@ -63,6 +64,34 @@ claude mcp add altweb-context -- npx -y altweb-context
 
 (From source: `npm install && npm run build`, then use the bundles under
 `packages/*/dist/`.)
+
+## Running from source
+
+Node.js 20 or newer is required. From the repository root:
+
+```bash
+npm install
+npm run build
+
+# Create and save an identity with the locally built CLI
+npm run keygen
+
+# Start the editor in development mode
+npm run dev
+```
+
+The editor prints its local URL (normally `http://localhost:5173`). The CLI can
+be invoked as `node packages/cli/dist/altweb.mjs <command>`. Do not use `npx
+altweb` inside the checkout: npm may select the local workspace package, whose
+executable does not exist until it has been built.
+
+The documentation site is intentionally a separate npm project rather than a
+workspace. To run it locally:
+
+```bash
+npm install --prefix site
+npm run dev --prefix site
+```
 
 Trust a signer by adding its **full public key** to `~/.altweb/trusted-keys.json`
 (the `UNTRUSTED_KEY` refusal message hands you the ready-made entry; the short

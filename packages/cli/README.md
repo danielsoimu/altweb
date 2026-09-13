@@ -10,6 +10,11 @@ MCP loader: [`altweb-context`](https://www.npmjs.com/package/altweb-context)
 
 ## Quick start
 
+These `npx` commands install the published package. From a source checkout,
+first run `npm install && npm run build`, then replace `npx altweb` with
+`node packages/cli/dist/altweb.mjs` (from the repository root). For the saved
+key-generation flow, `npm run keygen` is also available at the repository root.
+
 ```bash
 # verify a capsule — file, #hash URL, or raw hash; fully offline, no network
 npx altweb verify page.altweb.html

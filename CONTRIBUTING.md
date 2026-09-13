@@ -30,11 +30,15 @@ guarantees, so contributions are reviewed strictly. Honest expectations below.
 ## Developing
 
 ```bash
-npm install          # workspaces: packages/core, packages/cli, packages/mcp, apps/editor, site
+npm install          # workspaces: packages/core, packages/cli, packages/mcp, apps/editor
 npm test             # core + mcp + editor suites
 npm run typecheck    # tsc across all packages
-npm run build        # CLI + MCP bundles, editor, site
+npm run build        # CLI + MCP bundles and editor
+npm run dev          # editor development server
 ```
+
+The documentation site is a separate npm project. Use `npm install --prefix
+site`, followed by `npm run dev --prefix site` or `npm run build --prefix site`.
 
 ## Licensing of contributions
 
