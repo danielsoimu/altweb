@@ -22,7 +22,7 @@ on:
           - both
 
 permissions:
-  contents: read
+  contents: write # create the matching GitHub release + tag after publish
   id-token: write # OIDC - required for npm provenance
 
 jobs:
@@ -56,3 +56,24 @@ jobs:
       - name: Publish altweb
         if: ${{ inputs.package == 'altweb' || inputs.package == 'both' }}
         run: npm publish --provenance --access public -w altweb
+      # GitHub release mirrors every npm publish so the repo's "Latest" can
+      # never diverge from npm again. Tag convention: <package>-vX.Y.Z
+      # (per-package versions diverge; a bare vX.Y.Z would lie about the rest).
+      - name: GitHub release for altweb-context
+        if: ${{ inputs.package == 'altweb-context' || inputs.package == 'both' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./packages/mcp/package.json').version")
+          gh release create "altweb-context-v$VERSION" --target "$GITHUB_SHA" \
+            --title "altweb-context v$VERSION" --generate-notes \
+            --notes "npm: https://www.npmjs.com/package/altweb-context/v/$VERSION (published with provenance attestations)"
+      - name: GitHub release for altweb
+        if: ${{ inputs.package == 'altweb' || inputs.package == 'both' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./packages/cli/package.json').version")
+          gh release create "altweb-v$VERSION" --target "$GITHUB_SHA" \
+            --title "altweb v$VERSION" --generate-notes \
+            --notes "npm: https://www.npmjs.com/package/altweb/v/$VERSION (published with provenance attestations)"
