@@ -1,0 +1,53 @@
+name: Release (npm, with provenance)
+
+# Publishes to npm WITH provenance attestations - the published package
+# carries a verifiable link back to this repo, this workflow, and the exact
+# commit. For a provenance tool, publishing without provenance was the one
+# missing piece (and directory scanners penalize it).
+#
+# Auth: npm Trusted Publishing (OIDC) - configure once per package on
+# npmjs.com (package Settings -> Trusted Publisher -> GitHub Actions:
+# repository danielsoimu/altweb, workflow release.yml). No token to store.
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Which package to publish
+        required: true
+        type: choice
+        options:
+          - altweb-context
+          - altweb
+          - both
+
+permissions:
+  contents: read
+  id-token: write # OIDC - required for npm provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - name: Install
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Publish altweb-context
+        if: ${{ inputs.package == 'altweb-context' || inputs.package == 'both' }}
+        run: npm publish --provenance --access public -w altweb-context
+      - name: Publish altweb
+        if: ${{ inputs.package == 'altweb' || inputs.package == 'both' }}
+        run: npm publish --provenance --access public -w altweb

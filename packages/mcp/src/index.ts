@@ -12,6 +12,7 @@
  * time; otherwise sanitization does not exist under Node.
  */
 import '@altweb/core/node-dom';
+import { readFileSync } from 'node:fs';
 import {
   base64urlDecode,
   decodePage,
@@ -44,7 +45,14 @@ function envelopePublicKey(hash: string): string | undefined {
   }
 }
 
-const server = new McpServer({ name: 'altweb-context', version: '1.1.0' });
+// The npm package always ships package.json next to dist/, and in dev the
+// same path resolves to packages/mcp/package.json - one source of truth,
+// so the self-reported version can never go stale again.
+const VERSION: string = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+).version;
+
+const server = new McpServer({ name: 'altweb-context', version: VERSION });
 
 // Tool names stay on the registerTool( line: MCP directories read the tool
 // surface statically and their matchers expect single-line declarations.
