@@ -37,6 +37,11 @@ jobs:
           node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
+      - name: Update npm
+        # Node 22 bundles npm 10; the OIDC trusted-publishing token exchange
+        # exists only in npm >= 11.5 - with npm 10 the PUT goes out
+        # unauthenticated and the registry masks it as E404.
+        run: npm install -g npm@latest
       - name: Install
         run: npm ci
       - name: Typecheck
