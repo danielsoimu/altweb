@@ -44,11 +44,11 @@ function envelopePublicKey(hash: string): string | undefined {
   }
 }
 
-const server = new McpServer({ name: 'altweb-context', version: '1.0.0' });
+const server = new McpServer({ name: 'altweb-context', version: '1.1.0' });
 
-server.registerTool(
-  'load_capsule',
-  {
+// Tool names stay on the registerTool( line: MCP directories read the tool
+// surface statically and their matchers expect single-line declarations.
+server.registerTool('load_capsule', {
     title: 'Load a signed context capsule',
     description:
       'Verify an ALTWEB capsule and, only if its signature is valid AND the signer ' +
@@ -114,9 +114,7 @@ server.registerTool(
   }
 );
 
-server.registerTool(
-  'verify_capsule',
-  {
+server.registerTool('verify_capsule', {
     title: 'Verify a capsule and report provenance',
     description:
       'Provenance report for an ALTWEB capsule (signed? verified? trusted? encrypted?) ' +
@@ -165,9 +163,7 @@ server.registerTool(
   }
 );
 
-server.registerTool(
-  'list_trusted_keys',
-  {
+server.registerTool('list_trusted_keys', {
     title: 'List trusted signer fingerprints',
     description: 'Show the signers currently allowed by the local trust file.',
     inputSchema: {},
